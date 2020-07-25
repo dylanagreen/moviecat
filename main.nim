@@ -7,7 +7,6 @@ var
   upper = temp.len - 1
   mid = upper div 2
   cmd = ""
-  not_found = true
   ind = -1
 
 
@@ -15,17 +14,37 @@ proc receive_command*(): string =
   result = stdin.readLine
   # logging.debug("Input: ", result)
 
+proc decrypt_answer(cmd: string): bool =
+  # Always need to be able to quit
+  if cmd.toLower() == "quit":
+    quit()
+  elif cmd.toLower() == "yes" or cmd.toLower() == "y":
+    return true
+  return false
+
+
 proc auto_insert(val: float) =
-  while not_found:
-    # These first two if blocks handl edge cases.
+  while true:
+    var ans = false # The answer to the posed question
+
+    # These first two if blocks handle edge cases.
     # If the lower and upper bounds are the same we need to check to see if the
-    # "found" position is higher than the value we want to insert
+    # found position is higher than the value we want to insert.
     # If it is we insert before, if not we insert it after.
     if lower == upper:
-      if temp[lower] > val:
-        ind = lower
-      else:
-        ind = lower + 1
+
+      # Find out of the value is better than the lower value, which is the
+      # insertion point.
+      echo &"Is {val} > {temp[lower]}?"
+      cmd = receive_command()
+      if cmd != "":
+        ans = decrypt_answer(cmd)
+
+      ind = if ans: lower + 1 else: lower
+      # if ans:
+      #   ind = lower
+      # else:
+      #   ind = lower + 1
       break
 
     # If the lower is above the higher bound, then we insert at the lower
@@ -38,13 +57,21 @@ proc auto_insert(val: float) =
     # If the value is above the one at this index, the lower bound is moved above
     # the midpoint, otherwise the upper bound is moved below the midpoint.
     mid = (upper + lower) div 2
-    if temp[mid] < val:
+
+     # Find out of the value is better than the midpoint.
+    echo &"Is {val} > {temp[mid]}?"
+    cmd = receive_command()
+
+    if cmd != "" and decrypt_answer(cmd):
       lower = mid + 1
-    elif temp[mid] > val:
+    else:
+      # Normally we might insert at the equality point but here's a secret
+      # mega pro tip. If we include code here for inserting at "mid point"
+      # it'll get inserted before, the same place as if we just decrease
+      # upper and then run the code above where lower > upper and we
+      # insert at the same point. Wow! I think. I didn't map it out very
+      # robustly.
       upper = mid - 1
-    elif temp[mid] == val:
-      ind = mid
-      break
 
   temp.insert(val, ind)
 
