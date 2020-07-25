@@ -10,22 +10,25 @@ import system
 
 
 type
-  IMDB* = ref object
-    # Sequences storing the list of movies, the years, and the ids.
-    # Helper methods exist to take a movie name or id and find relevant
-    # information on that movie in the tsv files, things like directors writers
-    # and principal cast members.
-    movies*: seq[string]
-    ids*: seq[string]
-    years*: seq[string]
+  Movie* = ref object
+    # Movie objects store their name as well as a variety of information
+    # on them. I should really just make a sql database of this tbh.
+    name*: string
+    name_lower: string
+    id*: string
+    year*: int
 
-    movies_lower: seq[string]
+  IMDB* = ref object
+    # Sequence of Movie objects.
+    movies*: seq[Movie]
+
+
+proc `$`*(movie: Movie): string =
+  result = &"{movie.name} ({movie.id}): {movie.year}"
 
 proc initialize_movies*(name: string = "title_reduced.tsv"): IMDB =
-  # Initialize the database sequences to be empty to start with.
-  var ids: seq[string] = @[]
-  var movies: seq[string] = @[]
-  var years: seq[string] = @[]
+  # Initialize the database sequence to be empty to start with.
+  var movies: seq[Movie] = @[]
 
   # For future reference note that format of the tsv is as follows for the header:
   # tconst, movie, primarytitle, originaltitle, isadult, startyear, endyear, runtime, genres
@@ -37,23 +40,26 @@ proc initialize_movies*(name: string = "title_reduced.tsv"): IMDB =
     # logging.error(&"Attempted to load {name}")
     raise newException(IOError, "File not found!")
 
-  var parser: CsvParser
+  var parser: CSVParser
   parser.open(name, separator='\t')
   # For future reference so we know file loading succeeded
-  # logging.debug(&"Loaded IMDB file: {weights_name}")
+  # logging.debug(&"Loaded IMDB file: {name}")
 
   while readRow(parser):
-    # I probably shouldn't hard code this but i'll figure out a way not to later
-    ids.add(parser.row[0])
-    movies.add(parser.row[2])
-    years.add(parser.row[5])
+    try:
+      # I probably shouldn't hard code this but i'll figure out a way not to later
+      movies.add(Movie(id: parser.row[0], name: parser.row[2],
+                        name_lower: parser.row[2].toLower(), year: parseInt(parser.row[5])))
+    except ValueError:
+      # This ignores movies that are in development or don't have a proper year
+      continue
 
   # Always want to close when you're done for memory puposes!
   parser.close()
 
-  result = IMDB(ids: ids, movies: movies, years: years, movies_lower: movies.map(proc(x: string): string = x.toLower()))
+  result = IMDB(movies: movies)
 
-# Looks for the movie you wanted in the imdb database you loaded
-# the more recent one you loaded the better your chances are.
-proc find*(db: IMDB, name: string): int =
-  result = db.movies_lower.find(name)
+# Looks for the movie you wanted in the imdb database you loaded.
+# The more recent one you loaded the better your chances are.
+proc find*(db: IMDB, name: string): seq[Movie] =
+  result = db.movies.filter(proc(x: Movie): bool = x.name_lower.contains(name))

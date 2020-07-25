@@ -16,7 +16,8 @@ var
   t1 = cpuTime()
   db = initialize_movies()
   t2 = cpuTime()
-echo &"Initialization complete in {t2 - t1} seconds"
+echo &"Initialization complete in {t2 - t1} seconds."
+echo &"Loaded {db.movies.len} movies."
 
 
 proc receive_command*(): string =
@@ -52,10 +53,6 @@ proc auto_insert(val: float) =
         ans = decrypt_answer(cmd)
 
       ind = if ans: lower + 1 else: lower
-      # if ans:
-      #   ind = lower
-      # else:
-      #   ind = lower + 1
       break
 
     # If the lower is above the higher bound, then we insert at the lower
@@ -98,6 +95,7 @@ proc decrypt_command*(cmd: string) =
       echo "Did you forget to pass a movie name to look for?"
       return
     else:
-      let ind = db.find(search[1..^1].join(" "))
-      echo "Found this movie:"
-      echo &"{db.movies[ind]}, {db.years[ind]}"
+      let found = db.find(search[1..^1].join(" "))
+      echo "Found these movies:"
+      echo found
+      # echo &"{db.movies[ind]}, {db.years[ind]}"
