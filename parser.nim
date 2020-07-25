@@ -83,6 +83,17 @@ proc auto_insert(val: float) =
 
   temp.insert(val, ind)
 
+proc find_movie(cmd: string) =
+  let search = cmd.split(' ')
+  if search.len < 2:
+    echo "Did you forget to pass a movie name to look for?"
+    return
+  else:
+    let found = db.find(search[1..^1].join(" "))
+    echo "Found these movies:"
+    for i in 0..<found.len:
+      echo &"[{i}] {found[i]}"
+
 proc decrypt_command*(cmd: string) =
   if cmd.toLower() == "quit":
     quit()
@@ -90,12 +101,4 @@ proc decrypt_command*(cmd: string) =
     auto_insert(7.0)
     echo temp
   elif cmd.toLower().startsWith("find"):
-    let search = cmd.split(' ')
-    if search.len < 2:
-      echo "Did you forget to pass a movie name to look for?"
-      return
-    else:
-      let found = db.find(search[1..^1].join(" "))
-      echo "Found these movies:"
-      echo found
-      # echo &"{db.movies[ind]}, {db.years[ind]}"
+    find_movie(cmd)
