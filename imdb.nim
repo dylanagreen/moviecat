@@ -2,33 +2,37 @@ import parsecsv
 
 # import logging
 
+import db_sqlite
 import os
-import sequtils
 import strutils
 import strformat
 import system
 
 
-type
-  Movie* = ref object
-    # Movie objects store their name as well as a variety of information
-    # on them. I should really just make a sql database of this tbh.
-    name*: string
-    name_lower: string
-    id*: string
-    year*: int
+let db* = open("cat.db", "", "", "")
+echo(db.getValue(sql"SELECT name FROM sqlite_master WHERE type='table' AND name='imdb_db'"))
+# db.exec(sql"DROP TABLE IF EXISTS imdb_db")
 
-  IMDB* = ref object
-    # Sequence of Movie objects.
-    movies*: seq[Movie]
+# I do not overload $ for the Row object because the personal ranking database
+# will also return a Row and I do not want to overwrite printing for
+# that kind of Row.
+proc movie_row_to_string*(movie: Row): string =
+  result = &"({movie[0]}) {movie[1]}, {movie[2]}"
 
 
-proc `$`*(movie: Movie): string =
-  result = &"{movie.name} ({movie.id}): {movie.year}"
+proc initialize_movies*(name: string = "title_reduced.tsv") =
+  # Checks to see if the table already exists and if it does we bail
+  if db.getValue(sql"SELECT name FROM sqlite_master WHERE type='table' AND name='imdb_db'") != "":
+    echo "IMDB data table detected"
+    return
 
-proc initialize_movies*(name: string = "title_reduced.tsv"): IMDB =
-  # Initialize the database sequence to be empty to start with.
-  var movies: seq[Movie] = @[]
+  # If we got here then the table doesn't exist so we will create it.
+  # Gonna throw in a if not exists justtttt in case.
+  db.exec(sql"""CREATE TABLE IF NOT EXISTS imdb_db (
+                 id   TEXT PRIMARY KEY,
+                 name TEXT NOT NULL,
+                 year INT
+              )""")
 
   # For future reference note that format of the tsv is as follows for the header:
   # tconst, movie, primarytitle, originaltitle, isadult, startyear, endyear, runtime, genres
@@ -48,18 +52,19 @@ proc initialize_movies*(name: string = "title_reduced.tsv"): IMDB =
   while readRow(parser):
     try:
       # I probably shouldn't hard code this but i'll figure out a way not to later
-      movies.add(Movie(id: parser.row[0], name: parser.row[2],
-                        name_lower: parser.row[2].toLower(), year: parseInt(parser.row[5])))
+      db.exec(sql"INSERT INTO imdb_db (id, name, year) VALUES (?, ?, ?)",
+              parser.row[0], parser.row[2], parseInt(parser.row[5]))
     except ValueError:
       # This ignores movies that are in development or don't have a proper year
+      # Since they will fail parseInt with a ValueError. Not the best way to
+      # do this honestly.
       continue
 
   # Always want to close when you're done for memory puposes!
   parser.close()
 
-  result = IMDB(movies: movies)
-
 # Looks for the movie you wanted in the imdb database you loaded.
-# The more recent one you loaded the better your chances are.
-proc find*(db: IMDB, name: string): seq[Movie] =
-  result = db.movies.filter(proc(x: Movie): bool = x.name_lower.contains(name))
+proc find_movie_db*(name: string): seq[Row] =
+  # Need to insert the magic % wildcards before and after to search for names
+  # that include the search string
+  result = db.getAllRows(sql"SELECT * from imdb_db where name LIKE ?", &"%{name}%")

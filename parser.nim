@@ -1,3 +1,4 @@
+import db_sqlite
 import strformat
 import strutils
 import times
@@ -12,13 +13,13 @@ var
   ind = -1
 
 echo "Initializing db, please hold a moment..."
+var t1 = cpuTime()
+initialize_movies() # Actually initializes the database.
 var
-  t1 = cpuTime()
-  db = initialize_movies()
+  num = db.getValue(sql"SELECT COUNT(ALL) from imdb_db")
   t2 = cpuTime()
 echo &"Initialization complete in {t2 - t1} seconds."
-echo &"Loaded {db.movies.len} movies."
-
+echo &"Found {num} movies in database."
 
 proc receive_command*(): string =
   result = stdin.readLine
@@ -33,6 +34,7 @@ proc decrypt_answer(cmd: string): bool =
   return false
 
 
+# Insert a movie into its position in the database.
 proc auto_insert(val: float) =
   while true:
     var
@@ -83,20 +85,22 @@ proc auto_insert(val: float) =
 
   temp.insert(val, ind)
 
-proc find_movie(cmd: string): seq[Movie] =
+
+proc find_movie(cmd: string): seq[Row] =
   let search = cmd.split(' ')
   if search.len < 2:
     echo "Did you forget to pass a movie name to look for?"
     return
   else:
-    result = db.find(search[1..^1].join(" "))
+    result = find_movie_db(search[1..^1].join(" "))
     echo "Found these movies:"
     for i in 0..<result.len:
-      echo &"[{i}] {result[i]}"
+      echo &"[{i}] {movie_row_to_string(result[i])}"
+
 
 proc insert_movie(cmd: string) =
   let movies = find_movie(cmd)
-  var found: Movie
+  var found: Row # The movie we decided to insert.
   if movies.len < 1:
     return # Aw sad no movies.
   elif movies.len == 1:
@@ -115,7 +119,7 @@ proc insert_movie(cmd: string) =
         echo "Bad integer passed. Try again."
         i = receive_command()
 
-  echo &"You have selected {found}"
+  echo &"You have selected {movie_row_to_string(found)}"
 
 
 proc decrypt_command*(cmd: string) =
