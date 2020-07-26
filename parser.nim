@@ -83,22 +83,47 @@ proc auto_insert(val: float) =
 
   temp.insert(val, ind)
 
-proc find_movie(cmd: string) =
+proc find_movie(cmd: string): seq[Movie] =
   let search = cmd.split(' ')
   if search.len < 2:
     echo "Did you forget to pass a movie name to look for?"
     return
   else:
-    let found = db.find(search[1..^1].join(" "))
+    result = db.find(search[1..^1].join(" "))
     echo "Found these movies:"
-    for i in 0..<found.len:
-      echo &"[{i}] {found[i]}"
+    for i in 0..<result.len:
+      echo &"[{i}] {result[i]}"
+
+proc insert_movie(cmd: string) =
+  let movies = find_movie(cmd)
+  var found: Movie
+  if movies.len < 1:
+    return # Aw sad no movies.
+  elif movies.len == 1:
+    found = movies[0] # Yay one movie!
+  else: # Uh oh lots of movies please tell me which one
+    echo "Which movie did you want?"
+    var
+      i = receive_command()
+      bad = true
+    while bad:
+      try:
+        let ind = parseInt(i)
+        found = movies[ind]
+        bad = false
+      except:
+        echo "Bad integer passed. Try again."
+        i = receive_command()
+
+  echo &"You have selected {found}"
+
 
 proc decrypt_command*(cmd: string) =
   if cmd.toLower() == "quit":
     quit()
-  elif cmd.toLower() == "insert":
-    auto_insert(7.0)
-    echo temp
+  elif cmd.toLower().startsWith("insert"):
+    insert_movie(cmd)
   elif cmd.toLower().startsWith("find"):
-    find_movie(cmd)
+    discard find_movie(cmd)
+  else:
+    echo "Unrecognized command"
