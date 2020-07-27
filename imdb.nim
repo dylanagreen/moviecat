@@ -1,9 +1,8 @@
-import parsecsv
-
 # import logging
 
 import db_sqlite
 import os
+import parsecsv
 import strutils
 import strformat
 import system
@@ -11,6 +10,7 @@ import system
 
 let db* = open("cat.db", "", "", "")
 echo(db.getValue(sql"SELECT name FROM sqlite_master WHERE type='table' AND name='imdb_db'"))
+# I keep this line here for testing rebuilding the imdb database from scratch.
 # db.exec(sql"DROP TABLE IF EXISTS imdb_db")
 
 # I do not overload $ for the Row object because the personal ranking database
@@ -20,7 +20,7 @@ proc movie_row_to_string*(movie: Row): string =
   result = &"({movie[0]}) {movie[1]}, {movie[2]}"
 
 
-proc initialize_movies*(name: string = "title_reduced.tsv") =
+proc initialize_movies*(name: string = "title.basics.tsv") =
   # Checks to see if the table already exists and if it does we bail
   if db.getValue(sql"SELECT name FROM sqlite_master WHERE type='table' AND name='imdb_db'") != "":
     echo "IMDB data table detected"
@@ -45,20 +45,17 @@ proc initialize_movies*(name: string = "title_reduced.tsv") =
     raise newException(IOError, "File not found!")
 
   var parser: CSVParser
-  parser.open(name, separator='\t')
+  parser.open(name, separator='\t', quote='\0')
   # For future reference so we know file loading succeeded
   # logging.debug(&"Loaded IMDB file: {name}")
 
   while readRow(parser):
-    try:
+    # Skips non movie things, because I don't care about those.
+    # Second check ignores movies with no release year.
+    if parser.row[1] == "movie" and parser.row[5][0].isDigit:
       # I probably shouldn't hard code this but i'll figure out a way not to later
       db.exec(sql"INSERT INTO imdb_db (id, name, year) VALUES (?, ?, ?)",
               parser.row[0], parser.row[2], parseInt(parser.row[5]))
-    except ValueError:
-      # This ignores movies that are in development or don't have a proper year
-      # Since they will fail parseInt with a ValueError. Not the best way to
-      # do this honestly.
-      continue
 
   # Always want to close when you're done for memory puposes!
   parser.close()
