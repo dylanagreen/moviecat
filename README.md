@@ -11,3 +11,7 @@ This program will organically build a ranking of every movie you've seen without
 the requirement for scales. You are freed from having to rate movies on arbitrary
 scales, like 0-10, or out of 5 stars, or the number of times you'd rather watch
 Casablanca as compared to each movie. Things like that.
+
+## Dependencies
+Moviecat should compile just fine without any dependencies, although if you want
+to actually run it you'll need sqlite.
