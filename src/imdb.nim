@@ -25,14 +25,6 @@ proc initialize_movies*(name: string = "title.basics.tsv") =
     echo "IMDB data table detected"
     return
 
-  # If we got here then the table doesn't exist so we will create it.
-  # Gonna throw in a if not exists justtttt in case.
-  db.exec(sql"""CREATE TABLE IF NOT EXISTS imdb_db (
-                 id   TEXT PRIMARY KEY,
-                 name TEXT NOT NULL,
-                 year INT
-              )""")
-
   # For future reference note that format of the tsv is as follows for the header:
   # tconst, movie, primarytitle, originaltitle, isadult, startyear, endyear, runtime, genres
   # Original title is the original language form of the title
@@ -41,10 +33,18 @@ proc initialize_movies*(name: string = "title.basics.tsv") =
   if not fileExists(loc):
     # logging.error("File not found!")
     # logging.error(&"Attempted to load {name}")
-    raise newException(IOError, "File not found!")
+    raise newException(IOError, &"File {loc} not found!")
+
+  # If we got here then the table doesn't exist so we will create it.
+  # Gonna throw in a if not exists justtttt in case.
+  db.exec(sql"""CREATE TABLE IF NOT EXISTS imdb_db (
+                 id   TEXT PRIMARY KEY,
+                 name TEXT NOT NULL,
+                 year INT
+              )""")
 
   var parser: CSVParser
-  parser.open(name, separator='\t', quote='\0')
+  parser.open(loc, separator='\t', quote='\0')
   # For future reference so we know file loading succeeded
   # logging.debug(&"Loaded IMDB file: {name}")
 
