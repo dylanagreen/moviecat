@@ -4,6 +4,13 @@ import strutils
 
 import imdb
 
+# This is here for when we echo ranks, so we can number them correctly.
+# The insertion algorithm is built such that a higher number is better
+# obviously, but when we rank things on a list, we as humans prefer to
+# but the best at number 1. Hence, needing the total number of ranked movies.
+let temp_ranked = db.getValue(sql"SELECT COUNT(ALL) from ranking")
+var num_ranked* = if temp_ranked != "": parse_int(temp_ranked) else: 0
+
 # Provided here again to avoid a circular import.
 proc receive_command*(): string =
   result = stdin.readLine
@@ -26,11 +33,13 @@ proc ranking_to_string(ranking: Row): string =
 
 proc insert_at_rank(movie: Row, rank: int) =
   # We increase rank by 7 because the binary search is 0 indexed but
-  # ranking is 1 indexed.
-  echo &"Inserting at rank {rank + 1}"
+  # ranking is 1 indexed. See above comment for reasoning behind num_ranked
+  let num_ranked = parseInt(db.getValue(sql"SELECT COUNT(ALL) from ranking"))
+  echo &"Inserting at rank {num_ranked - rank + 1}"
 
   db.exec(sql"UPDATE ranking SET rank = rank + 1 WHERE rank > ?", rank)
   db.exec(sql"INSERT INTO ranking (id, rank) VALUES (?, ?)", movie[0], rank + 1)
+  # num_ranked += 1 # Increase the number ranked.
 
 
 # Val is the movie you're currently inserting.
@@ -97,7 +106,7 @@ proc rank_movie*(val: Row) =
   insert_at_rank(val, ind)
 
 proc print_rankings*() =
-  let rows = db.getAllRows(sql"SELECT * FROM ranking ORDER BY rank")
+  let rows = db.getAllRows(sql"SELECT * FROM ranking ORDER BY rank DESC")
 
   if rows.len == 0:
     echo "No rankings to print. Go rank some movies!"
