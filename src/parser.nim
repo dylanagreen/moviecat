@@ -50,7 +50,7 @@ proc decrypt_command*(cmd: string) =
   if cmd.toLower() == "quit":
     db.close()
     quit()
-  elif cmd.toLower().startsWith("insert"):
+  elif cmd.toLower().startsWith("insert") or cmd.toLower().startsWith("rank"):
     insert_movie(cmd)
   elif cmd.toLower().startsWith("find"):
     discard find_movie(cmd)

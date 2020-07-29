@@ -20,8 +20,7 @@ db.exec(sql"""CREATE TABLE IF NOT EXISTS ranking (
                  id   TEXT NOT NULL PRIMARY KEY,
                  rank INT
               )""")
-
-var num_ranked = db.getValue(sql"SELECT COUNT(ALL) from ranking")
+let num_ranked = db.getValue(sql"SELECT COUNT(ALL) from ranking")
 
 echo &"Initialization complete in {t2 - t1} seconds."
 echo &"Found {num} movies in database."
