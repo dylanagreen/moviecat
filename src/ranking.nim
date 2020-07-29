@@ -4,13 +4,6 @@ import strutils
 
 import imdb
 
-# This is here for when we echo ranks, so we can number them correctly.
-# The insertion algorithm is built such that a higher number is better
-# obviously, but when we rank things on a list, we as humans prefer to
-# but the best at number 1. Hence, needing the total number of ranked movies.
-let temp_ranked = db.getValue(sql"SELECT COUNT(ALL) from ranking")
-var num_ranked* = if temp_ranked != "": parse_int(temp_ranked) else: 0
-
 # Provided here again to avoid a circular import.
 proc receive_command*(): string =
   result = stdin.readLine
@@ -33,7 +26,10 @@ proc ranking_to_string(ranking: Row): string =
 
 proc insert_at_rank(movie: Row, rank: int) =
   # We increase rank by 7 because the binary search is 0 indexed but
-  # ranking is 1 indexed. See above comment for reasoning behind num_ranked
+  # ranking is 1 indexed. We need to include num_ranked because
+  # the insertion algorithm is built such that a higher number is better
+  # obviously, but when we rank things on a list, we as humans prefer to
+  # but the best at number 1. Hence, needing the total number of ranked movies.
   let num_ranked = parseInt(db.getValue(sql"SELECT COUNT(ALL) from ranking"))
   echo &"Inserting at rank {num_ranked - rank + 1}"
 
