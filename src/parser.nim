@@ -54,8 +54,8 @@ proc decrypt_command*(cmd: string) =
     insert_movie(cmd)
   elif cmd.toLower().startsWith("find"):
     discard find_movie(cmd)
-  elif cmd.toLower() == "print":
-    print_rankings()
+  elif cmd.toLower().startsWith("print"):
+    print_rankings(cmd)
   elif cmd.toLower() == "clear":
     clear_rankings()
   else:
