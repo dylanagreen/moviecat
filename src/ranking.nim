@@ -27,8 +27,18 @@ proc ranking_to_string(ranking: Row): string =
   result = movie_row_to_string(temp)
 
 
-proc print_rankings*() =
-  let rows = db.getAllRows(sql"SELECT * FROM ranking ORDER BY rank DESC")
+proc print_rankings*(cmd: string) =
+  let vals = cmd.split(' ')
+  var rows: seq[Row]
+
+  # Try and parse the second part as anumber and if it fails display 10 by default
+  try:
+    let num = parseInt(vals[1])
+    echo &"Printing top {num}"
+    rows = db.getAllRows(sql"SELECT * FROM ranking ORDER BY rank DESC LIMIT ?", num)
+  except ValueError:
+    echo "Invalid number to print, defaulting to top 10."
+    rows = db.getAllRows(sql"SELECT * FROM ranking ORDER BY rank DESC LIMIT 10")
 
   if rows.len == 0:
     echo "No rankings to print. Go rank some movies!"
