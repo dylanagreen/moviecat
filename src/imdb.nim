@@ -48,7 +48,7 @@ proc initialize_movies*(name: string = "title.basics.tsv") =
   # For future reference so we know file loading succeeded
   # logging.debug(&"Loaded IMDB file: {name}")
 
-  while readRow(parser):
+  while parser.readRow():
     # Skips non movie things, because I don't care about those.
     # Second check ignores movies with no release year.
     if parser.row[1] == "movie" and parser.row[5][0].isDigit:
@@ -63,4 +63,4 @@ proc initialize_movies*(name: string = "title.basics.tsv") =
 proc find_movie_db*(name: string): seq[Row] =
   # Need to insert the magic % wildcards before and after to search for names
   # that include the search string
-  result = db.getAllRows(sql"SELECT * from imdb_db where name LIKE ?", &"%{name}%")
+  result = db.getAllRows(sql"SELECT * FROM imdb_db WHERE name LIKE ?", &"%{name}%")
