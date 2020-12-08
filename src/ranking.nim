@@ -31,19 +31,19 @@ proc print_rankings*(cmd: string) =
   let vals = cmd.split(' ')
   var rows: seq[Row]
 
-  if vals.len > 1:
-    # Try and parse the second part as anumber and if it fails display 10 by default
-    try:
-      let num = parseInt(vals[1])
-      echo &"Printing top {num}"
-      rows = db.getAllRows(sql"SELECT * FROM ranking ORDER BY rank DESC LIMIT ?", num)
-    except ValueError:
-      echo "Invalid number to print, defaulting to top 10."
-      rows = db.getAllRows(sql"SELECT * FROM ranking ORDER BY rank DESC LIMIT 10")
-  else: rows = db.getAllRows(sql"SELECT * FROM ranking ORDER BY rank DESC LIMIT 10")
+  # Number of movies to print.
+  var num = 10
 
+  if vals.len > 1:
+    if "top" in vals:
+      try:
+        num = parseInt(vals[vals.find("top") + 1])
+      except: # Will catch both index out of bounds (no value) or value error
+        echo "Invalid number to print, defaulting to top 10."
+
+  rows = db.getAllRows(sql"SELECT * FROM ranking ORDER BY rank DESC LIMIT ?", num)
   if rows.len == 0:
-    echo "No rankings to print. Go rank some movies!"
+      echo "No rankings to print. Go rank some movies!"
 
   for i in 0..<rows.len:
     echo &"[{i + 1}] {ranking_to_string(rows[i])}"
