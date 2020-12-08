@@ -48,15 +48,22 @@ proc initialize_movies*(name: string = "title.basics.tsv") =
   # For future reference so we know file loading succeeded
   # logging.debug(&"Loaded IMDB file: {name}")
 
+  discard parser.readRow()
+  let
+    cols = parser.row
+    id = cols.find("tconst")
+    title = cols.find("primaryTitle")
+    year = cols.find("startYear")
+
   while parser.readRow():
     # Skips non movie things, because I don't care about those.
     # Second check ignores movies with no release year.
-    if parser.row[1] == "movie" and parser.row[5][0].isDigit:
+    if parser.row[1] == "movie" and parser.row[year][0].isDigit:
       # I probably shouldn't hard code this but i'll figure out a way not to later
       db.exec(sql"INSERT INTO imdb_db (id, name, year) VALUES (?, ?, ?)",
-              parser.row[0], parser.row[2], parseInt(parser.row[5]))
+              parser.row[id], parser.row[title], parseInt(parser.row[year]))
 
-  # Always want to close when you're done for memory puposes!
+  # Always want to close when you're done for memory purposes!
   parser.close()
 
 # Looks for the movie you wanted in the imdb database you loaded.
