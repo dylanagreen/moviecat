@@ -1,6 +1,7 @@
 import db_sqlite
 import strformat
 import strutils
+import times
 
 import imdb
 
@@ -189,12 +190,16 @@ proc rank_movie*(val: Row) =
       # robustly.
       upper = mid - 1
 
-  echo "What date did you watch this movie?"
+  echo "What date did you watch this movie? (YYYY-MM-DD)"
   echo "Input \"N\" to skip."
   cmd = receive_command()
 
   if not (cmd.toLower() == "n"):
-    insert_at_rank(val, ind, cmd)
+    try:
+      let dt = parse(cmd, "yyyy-MM-dd")
+      insert_at_rank(val, ind, dt.format("yyyy-MM-dd"))
+    except TimeParseError:
+      echo "Date not passed in the correct pattern, ignoring."
   else:
     insert_at_rank(val, ind)
 
