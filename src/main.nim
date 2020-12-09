@@ -14,11 +14,14 @@ var
   num = db.getValue(sql"SELECT COUNT(ALL) from imdb_db")
   t2 = cpuTime()
 
+# db.exec(sql"DROP TABLE IF EXISTS ranking")
+
 # Creates the ranking table if it does not exist. We do not modify this at
 # at startup so I see no need to abstract this single line to a method.
 db.exec(sql"""CREATE TABLE IF NOT EXISTS ranking (
                  id   TEXT NOT NULL PRIMARY KEY,
-                 rank INT
+                 rank INT,
+                 date DATE
               )""")
 let num_ranked = db.getValue(sql"SELECT COUNT(ALL) from ranking")
 

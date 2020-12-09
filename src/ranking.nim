@@ -26,6 +26,9 @@ proc ranking_to_string(ranking: Row): string =
   let temp = db.getRow(sql"SELECT * FROM imdb_db WHERE id=?", ranking[0])
   result = movie_row_to_string(temp)
 
+  if not ranking[^1].isEmptyOrWhitespace:
+    result = result & &" (Watched on {ranking[^1]})"
+
 
 proc print_rankings*(cmd: string) =
   let vals = cmd.split(' ')
@@ -71,7 +74,7 @@ proc print_rankings*(cmd: string) =
     echo &"[{i + 1}] {ranking_to_string(rows[i])}"
 
 
-proc insert_at_rank(movie: Row, rank: int) =
+proc insert_at_rank(movie: Row, rank: int, date = "") =
   # We increase rank by 1 because the binary search is 0 indexed but
   # ranking is 1 indexed. We need to include num_ranked because
   # the insertion algorithm is built such that a higher number is better
@@ -81,7 +84,12 @@ proc insert_at_rank(movie: Row, rank: int) =
   echo &"Inserting at rank {num_ranked - rank + 1}"
 
   db.exec(sql"UPDATE ranking SET rank = rank + 1 WHERE rank > ?", rank)
-  db.exec(sql"INSERT INTO ranking (id, rank) VALUES (?, ?)", movie[0], rank + 1)
+
+  if date == "":
+    db.exec(sql"INSERT INTO ranking (id, rank) VALUES (?, ?)", movie[0], rank + 1)
+  else:
+    # try:
+    db.exec(sql"INSERT INTO ranking (id, rank, date) VALUES (?, ?, ?)", movie[0], rank + 1, date)
   # num_ranked += 1 # Increase the number ranked.
 
 
@@ -181,7 +189,15 @@ proc rank_movie*(val: Row) =
       # robustly.
       upper = mid - 1
 
-  insert_at_rank(val, ind)
+  echo "What date did you watch this movie?"
+  echo "Input \"N\" to skip."
+  cmd = receive_command()
+
+  if not (cmd.toLower() == "n"):
+    insert_at_rank(val, ind, cmd)
+  else:
+    insert_at_rank(val, ind)
+
 
 proc clear_rankings*() =
   echo "Are you sure? This is irreversible."
