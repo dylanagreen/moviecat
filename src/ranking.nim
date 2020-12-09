@@ -33,15 +33,37 @@ proc print_rankings*(cmd: string) =
 
   # Number of movies to print.
   var num = 10
+  var year = 0
 
   if vals.len > 1:
     if "top" in vals:
       try:
         num = parseInt(vals[vals.find("top") + 1])
+
+        # Catch passing in negative numbers.
+        if num < 0:
+          num = 10
+          echo "Invalid number to print, defaulting to top 10."
       except: # Will catch both index out of bounds (no value) or value error
         echo "Invalid number to print, defaulting to top 10."
 
-  rows = db.getAllRows(sql"SELECT * FROM ranking ORDER BY rank DESC LIMIT ?", num)
+    if "year" in vals:
+      try:
+        year = parseInt(vals[vals.find("year") + 1])
+
+        # Catch passing negative years.
+        if year < 0:
+          year = 0
+          echo "Invalid number to print, defaulting to top 10."
+
+      except:
+        echo "Invalid year to print, defaulting to all years."
+
+  if year > 0:
+    rows = db.getAllRows(sql"SELECT A.* FROM ranking A WHERE A.id in (SELECT B.id FROM imdb_db B WHERE B.year=?) ORDER BY A.rank DESC LIMIT ?", year, num)
+    echo &"You have ranked {rows.len} movies from {year}!"
+  else:
+    rows = db.getAllRows(sql"SELECT * FROM ranking ORDER BY rank DESC LIMIT ?", num)
   if rows.len == 0:
       echo "No rankings to print. Go rank some movies!"
 
