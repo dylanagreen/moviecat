@@ -23,11 +23,11 @@ proc decrypt_answer(cmd: string): bool =
 
 
 # Find the movie in the movie db that corresponds to the id in this ranking.
-proc ranking_to_string(ranking: Row): string =
+proc ranking_to_string(ranking: Row, watched=false): string =
   let temp = db.getRow(sql"SELECT * FROM imdb_db WHERE id=?", ranking[0])
   result = movie_row_to_string(temp)
 
-  if not ranking[^1].isEmptyOrWhitespace:
+  if not ranking[^1].isEmptyOrWhitespace and watched:
     result = result & &" (Watched on {ranking[^1]})"
 
 
@@ -72,7 +72,7 @@ proc print_rankings*(cmd: string) =
       echo "No rankings to print. Go rank some movies!"
 
   for i in 0..<rows.len:
-    echo &"[{i + 1}] {ranking_to_string(rows[i])}"
+    echo &"[{i + 1}] {ranking_to_string(rows[i], true)}"
 
 
 proc insert_at_rank(movie: Row, rank: int, date = "") =
@@ -194,14 +194,14 @@ proc rank_movie*(val: Row) =
   echo "Input \"N\" to skip."
   cmd = receive_command()
 
-  if not (cmd.toLower() == "n"):
+  if cmd.toLower() == "n" or cmd.isEmptyOrWhitespace():
+    insert_at_rank(val, ind)
+  else:
     try:
       let dt = parse(cmd, "yyyy-MM-dd")
       insert_at_rank(val, ind, dt.format("yyyy-MM-dd"))
     except TimeParseError:
       echo "Date not passed in the correct pattern, ignoring."
-  else:
-    insert_at_rank(val, ind)
 
 
 proc clear_rankings*() =

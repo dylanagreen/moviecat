@@ -26,11 +26,11 @@ nim c src/main.nim
 For a quicker, but potentially more unstable version you can turn on the `-d:release` or
 `-d:danger` flags.
 
-# Example operation
+# Example
 I have chosen to rank Lady Bird (2017) among a few random classics, since I thought
 of this program while watching Lady Bird.
 ```
-What would you like to do?
+WWhat would you like to do?
 rank lady bird
 Found these movies:
 [0] (tt0163050) The Legend of a Lady Bird, 1997
@@ -46,14 +46,17 @@ Is (tt4925292) Lady Bird, 2017 > (tt0062622) 2001: A Space Odyssey, 1968?
 yes
 Is (tt4925292) Lady Bird, 2017 > (tt0088763) Back to the Future, 1985?
 no
+What date did you watch this movie? (YYYY-MM-DD)
+Input "N" to skip.
+2020-06-27
 Inserting at rank 2
 What would you like to do?
 print
 [1] (tt0088763) Back to the Future, 1985
-[2] (tt4925292) Lady Bird, 2017
+[2] (tt4925292) Lady Bird, 2017 (Watched on 2020-06-27)
 [3] (tt0062622) 2001: A Space Odyssey, 1968
-[4] (tt0082971) Raiders of the Lost Ark, 1981
-[5] (tt0087469) Indiana Jones and the Temple of Doom, 1984
+[4] (tt0082971) Raiders of the Lost Ark, 1981 (Watched on 2020-05-04)
+[5] (tt0087469) Indiana Jones and the Temple of Doom, 1984 (Watched on 2020-05-05)
 [6] (tt0099088) Back to the Future Part III, 1990
 [7] (tt0096874) Back to the Future Part II, 1989
 ```
