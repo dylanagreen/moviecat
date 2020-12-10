@@ -3,14 +3,18 @@
 import db_sqlite
 import os
 import parsecsv
+import sqlite3
 import strutils
 import strformat
 import system
 
 
 let db* = open("cat.db", "", "", "")
+
 # I keep this line here for testing rebuilding the imdb database from scratch.
 # db.exec(sql"DROP TABLE IF EXISTS imdb_db")
+# db.exec(sql"DROP TABLE IF EXISTS ranking")
+
 
 # I do not overload $ for the Row object because the personal ranking database
 # will also return a Row and I do not want to overwrite printing for
@@ -55,13 +59,29 @@ proc initialize_movies*(name: string = "title.basics.tsv") =
     title = cols.find("primaryTitle")
     year = cols.find("startYear")
 
+
+  var prep = db.prepare("INSERT INTO imdb_db (id, name, year) VALUES (?, ?, ?)")
+  db.exec(sql"BEGIN TRANSACTION")
+
   while parser.readRow():
     # Skips non movie things, because I don't care about those.
     # Second check ignores movies with no release year.
     if parser.row[1] == "movie" and parser.row[year][0].isDigit:
-      # I probably shouldn't hard code this but i'll figure out a way not to later
-      db.exec(sql"INSERT INTO imdb_db (id, name, year) VALUES (?, ?, ?)",
-              parser.row[id], parser.row[title], parseInt(parser.row[year]))
+      # Bind parameters to the prepared statement.
+      prep.bind_param(1, parser.row[id])
+      prep.bind_param(2, parser.row[title])
+      prep.bind_param(3, parseInt(parser.row[year]))
+
+      db.exec(prep)
+      discard reset(prep.PStmt)
+
+      # db.exec(sql"INSERT INTO imdb_db (id, name, year) VALUES (?, ?, ?)",
+      #         parser.row[id], parser.row[title], parseInt(parser.row[year]))
+
+  db.exec(sql"END TRANSACTION")
+
+  # If you don't do this the db will explode when you try do anything.
+  prep.finalize()
 
   # Always want to close when you're done for memory purposes!
   parser.close()

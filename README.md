@@ -26,11 +26,13 @@ nim c src/main.nim
 For a quicker, but potentially more unstable version you can turn on the `-d:release` or
 `-d:danger` flags.
 
+moviecat requires Nim >= 1.4.2 as it requires db_sqlite procs that were not added until that version.
+
 # Example
 I have chosen to rank Lady Bird (2017) among a few random classics, since I thought
 of this program while watching Lady Bird.
 ```
-WWhat would you like to do?
+What would you like to do?
 rank lady bird
 Found these movies:
 [0] (tt0163050) The Legend of a Lady Bird, 1997
