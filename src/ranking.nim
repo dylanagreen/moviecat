@@ -11,7 +11,7 @@ proc receive_command*(): string =
   # logging.debug("Input: ", result)
 
 
-# Insert a movie into its position in the database.
+# Finds yes or no answers, quits if you want to quit.
 proc decrypt_answer(cmd: string): bool =
   # Always need to be able to quit
   if cmd.toLower() == "quit":
@@ -156,6 +156,12 @@ proc rank_movie*(val: Row) =
       comparison = ranking_to_string(db.getRow(sql"SELECT * FROM ranking WHERE rank=?", lower + 1))
       echo &"Is {new_movie} > {comparison}?"
       cmd = receive_command()
+
+      # In case you change your mind about ranking this movie.
+      if cmd.toLower() == "cancel":
+        echo "Ranking canceled, returning."
+        return
+
       if cmd != "":
         ans = decrypt_answer(cmd)
 
@@ -178,6 +184,11 @@ proc rank_movie*(val: Row) =
     comparison = ranking_to_string(db.getRow(sql"SELECT * FROM ranking WHERE rank=?", mid + 1))
     echo &"Is {new_movie} > {comparison}?"
     cmd = receive_command()
+
+    # In case you change your mind about ranking this movie.
+    if cmd.toLower() == "cancel":
+      echo "Ranking canceled, returning."
+      return
 
     if cmd != "" and decrypt_answer(cmd):
       lower = mid + 1
