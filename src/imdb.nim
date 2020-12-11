@@ -87,7 +87,14 @@ proc initialize_movies*(name: string = "title.basics.tsv") =
   parser.close()
 
 # Looks for the movie you wanted in the imdb database you loaded.
-proc find_movie_db*(name: string): seq[Row] =
+proc find_movie_db*(name: string, params: seq[string]): seq[Row] =
   # Need to insert the magic % wildcards before and after to search for names
   # that include the search string
-  result = db.getAllRows(sql"SELECT * FROM imdb_db WHERE name LIKE ?", &"%{name}%")
+  var search_string = &"SELECT * FROM imdb_db WHERE name LIKE \'%{name}%\'"
+
+  if params.len > 0:
+    if "year" in params:
+      let year = params[params.find("year") + 1]
+      search_string = search_string & &" AND year={year}"
+
+  result = db.getAllRows(sql(search_string))

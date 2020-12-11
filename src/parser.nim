@@ -9,13 +9,48 @@ proc receive_command*(): string =
   result = stdin.readLine
   # logging.debug("Input: ", result)
 
+
+proc refine_search(): seq[string] =
+  echo "Refine search parameters?"
+  echo "Options: year [*year*]"
+  echo "Input \"N\" to skip."
+
+  var
+    cmd = receive_command()
+    year = 0
+
+  if cmd.toLower() == "n":
+    return
+
+  let vals = cmd.split(' ')
+
+  # Refining by year. Not the best way to do this just yet, but can be easily
+  # refactored later whena dding more search refinements.
+  if "year" in vals:
+    try:
+      year = parseInt(vals[vals.find("year") + 1])
+
+      # Catch passing negative years.
+      if year < 0:
+        year = 0
+        echo "Invalid year, ignoring."
+
+    except:
+      echo "Invalid year, ignoring."
+
+    if year > 0:
+      result.add("year")
+      result.add($year)
+
+
 proc find_movie(cmd: string): seq[Row] =
   let search = cmd.split(' ')
   if search.len < 2:
     echo "Did you forget to pass a movie name to look for?"
     return
   else:
-    result = find_movie_db(search[1..^1].join(" "))
+    let search_params = refine_search()
+    result = find_movie_db(search[1..^1].join(" "), search_params)
     echo "Found these movies:"
     for i in 0..<result.len:
       echo &"[{i}] {movie_row_to_string(result[i])}"
@@ -33,6 +68,8 @@ proc insert_movie(cmd: string) =
     var
       i = receive_command()
       bad = true
+
+    discard i.decrypt_answer() # In case you pass "quit" and we need to quit.
     while bad:
       try:
         let ind = parseInt(i)

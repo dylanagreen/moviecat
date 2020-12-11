@@ -12,7 +12,7 @@ proc receive_command*(): string =
 
 
 # Finds yes or no answers, quits if you want to quit.
-proc decrypt_answer(cmd: string): bool =
+proc decrypt_answer*(cmd: string): bool =
   # Always need to be able to quit
   if cmd.toLower() == "quit":
     db.close()
@@ -205,6 +205,9 @@ proc rank_movie*(val: Row) =
   echo "Input \"N\" to skip."
   cmd = receive_command()
 
+  # Code block that handles input validation for the dates.
+  # In order to sort by date (TODO) we need the date column to be actual
+  # SQL compliant dates.
   if cmd.toLower() == "n" or cmd.isEmptyOrWhitespace():
     insert_at_rank(val, ind)
   else:
