@@ -29,8 +29,9 @@ proc print_rankings*(cmd: string) =
   var
     num = 10
     year = 0
-    order_by = "DESC"
     search_string = ""
+    order_by = "DESC"
+    where_clause = ""
 
   if vals.len > 1:
     if "top" in vals:
@@ -61,23 +62,16 @@ proc print_rankings*(cmd: string) =
         # Catch passing negative years.
         if year < 0:
           year = 0
-          echo "Invalid number to print, defaulting to top 10."
+          echo "Invalid year to print, defaulting to all years."
 
-      except:
+      except ValueError:
         echo "Invalid year to print, defaulting to all years."
 
-  if year > 0:
-    search_string = &"SELECT A.* FROM ranking A WHERE A.id in (SELECT B.id FROM imdb_db B WHERE B.year=?) ORDER BY A.rank {order_by} LIMIT ?"
-    rows = db.getAllRows(sql(search_string), year, num)
-    # echo &"You have ranked {rows.len} movies from {year}!"
-  else:
-    search_string = &"SELECT * FROM ranking ORDER BY rank {order_by} LIMIT ?"
-    rows = db.getAllRows(sql(search_string), num)
+      if year > 0:
+        where_clause = &" WHERE A.id in (SELECT B.id FROM imdb_db B WHERE B.year={year})"
 
-  if rows.len == 0:
-      echo "No rankings to print. Go rank some movies!"
-
-
+  search_string = &"SELECT A.* FROM ranking A{where_clause} ORDER BY rank {order_by} LIMIT ?"
+  rows = db.getAllRows(sql(search_string), num)
   for i in 0..<rows.len:
     if order_by == "DESC":
       echo &"[{i + 1}] {ranking_to_string(rows[i], true)}"
