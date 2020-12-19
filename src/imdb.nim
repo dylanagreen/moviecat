@@ -9,7 +9,7 @@ import strformat
 import system
 
 
-let db* = open("cat.db", "", "", "")
+let db* = open(getAppDir() / "cat.db", "", "", "")
 
 # I keep this line here for testing rebuilding the imdb database from scratch.
 # db.exec(sql"DROP TABLE IF EXISTS imdb_db")

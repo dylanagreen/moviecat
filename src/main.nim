@@ -1,8 +1,12 @@
 import db_sqlite
+import marshal
+import os
+import streams
 import strformat
 import times
 
 import imdb
+import options
 import parser
 
 var cmd: string
@@ -21,7 +25,19 @@ db.exec(sql"""CREATE TABLE IF NOT EXISTS ranking (
                  rank INT,
                  date DATE
               )""")
-let num_ranked = db.getValue(sql"SELECT COUNT(ALL) from ranking")
+let
+  num_ranked = db.getValue(sql"SELECT COUNT(ALL) from ranking")
+  options_loc = getAppDir() / "options.txt"
+
+if not fileExists(options_loc):
+  echo "options.txt not found, creating options file."
+  var out_strm = newFileStream(options_loc, fmWrite)
+  out_strm.store(active_options)
+  out_strm.close()
+else:
+  var strm = newFileStream(options_loc, fmRead)
+  strm.load(active_options)
+  strm.close()
 
 echo &"Initialization complete in {t2 - t1} seconds."
 echo &"Found {num} movies in database."
@@ -29,7 +45,7 @@ echo &"You have ranked {num_ranked} movies!"
 
 while true:
   echo &"What would you like to do?"
-  cmd = receive_command()
+  cmd = parser.receive_command()
 
   if cmd != "":
     decrypt_command(cmd)

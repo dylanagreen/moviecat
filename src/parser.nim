@@ -3,7 +3,9 @@ import strformat
 import strutils
 
 import imdb
+import options
 import ranking
+
 
 proc receive_command*(): string =
   result = stdin.readLine
@@ -11,8 +13,15 @@ proc receive_command*(): string =
 
 
 proc refine_search(): seq[string] =
-  echo "Refine search parameters?"
-  echo "Options: year [*year*]"
+  # In this case there are no refine options that are active.
+  if active_options.len() == 0:
+    return
+
+  echo "Refine search options:"
+
+  for opt in active_options:
+    echo &"{option_names[ord(opt)]}"
+
   echo "Input \"N\" to skip."
 
   var
@@ -25,7 +34,7 @@ proc refine_search(): seq[string] =
   let vals = cmd.split(' ')
 
   # Refining by year. Not the best way to do this just yet, but can be easily
-  # refactored later whena dding more search refinements.
+  # refactored later when adding more search refinements.
   if "year" in vals:
     try:
       year = parseInt(vals[vals.find("year") + 1])
@@ -85,8 +94,7 @@ proc insert_movie(cmd: string) =
 
 proc decrypt_command*(cmd: string) =
   if cmd.toLower() == "quit":
-    db.close()
-    quit()
+    shutdown()
   elif cmd.toLower().startsWith("insert") or cmd.toLower().startsWith("rank"):
     insert_movie(cmd)
   elif cmd.toLower().startsWith("find"):
@@ -95,5 +103,7 @@ proc decrypt_command*(cmd: string) =
     print_rankings(cmd)
   elif cmd.toLower() == "clear":
     clear_rankings()
+  elif cmd.toLower() == "options":
+    set_options()
   else:
     echo "Unrecognized command"

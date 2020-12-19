@@ -4,22 +4,12 @@ import strutils
 import times
 
 import imdb
+import options
 
 # Provided here again to avoid a circular import.
 proc receive_command*(): string =
   result = stdin.readLine
   # logging.debug("Input: ", result)
-
-
-# Finds yes or no answers, quits if you want to quit.
-proc decrypt_answer*(cmd: string): bool =
-  # Always need to be able to quit
-  if cmd.toLower() == "quit":
-    db.close()
-    quit()
-  elif cmd.toLower() == "yes" or cmd.toLower() == "y":
-    return true
-  return false
 
 
 # Find the movie in the movie db that corresponds to the id in this ranking.
@@ -65,7 +55,7 @@ proc print_rankings*(cmd: string) =
 
   if year > 0:
     rows = db.getAllRows(sql"SELECT A.* FROM ranking A WHERE A.id in (SELECT B.id FROM imdb_db B WHERE B.year=?) ORDER BY A.rank DESC LIMIT ?", year, num)
-    echo &"You have ranked {rows.len} movies from {year}!"
+    # echo &"You have ranked {rows.len} movies from {year}!"
   else:
     rows = db.getAllRows(sql"SELECT * FROM ranking ORDER BY rank DESC LIMIT ?", num)
   if rows.len == 0:
