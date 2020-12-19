@@ -26,8 +26,11 @@ proc print_rankings*(cmd: string) =
   var rows: seq[Row]
 
   # Number of movies to print.
-  var num = 10
-  var year = 0
+  var
+    num = 10
+    year = 0
+    order_by = "DESC"
+    search_string = ""
 
   if vals.len > 1:
     if "top" in vals:
@@ -40,7 +43,17 @@ proc print_rankings*(cmd: string) =
           echo "Invalid number to print, defaulting to top 10."
       except: # Will catch both index out of bounds (no value) or value error
         echo "Invalid number to print, defaulting to top 10."
+    elif "bottom" in vals:
+      order_by = "ASC"
+      try:
+        num = parseInt(vals[vals.find("top") + 1])
 
+        # Catch passing in negative numbers.
+        if num < 0:
+          num = 10
+          echo "Invalid number to print, defaulting to bottom 10."
+      except: # Will catch both index out of bounds (no value) or value error
+        echo "Invalid number to print, defaulting to bottom 10."
     if "year" in vals:
       try:
         year = parseInt(vals[vals.find("year") + 1])
@@ -54,15 +67,22 @@ proc print_rankings*(cmd: string) =
         echo "Invalid year to print, defaulting to all years."
 
   if year > 0:
-    rows = db.getAllRows(sql"SELECT A.* FROM ranking A WHERE A.id in (SELECT B.id FROM imdb_db B WHERE B.year=?) ORDER BY A.rank DESC LIMIT ?", year, num)
+    search_string = &"SELECT A.* FROM ranking A WHERE A.id in (SELECT B.id FROM imdb_db B WHERE B.year=?) ORDER BY A.rank {order_by} LIMIT ?"
+    rows = db.getAllRows(sql(search_string), year, num)
     # echo &"You have ranked {rows.len} movies from {year}!"
   else:
-    rows = db.getAllRows(sql"SELECT * FROM ranking ORDER BY rank DESC LIMIT ?", num)
+    search_string = &"SELECT * FROM ranking ORDER BY rank {order_by} LIMIT ?"
+    rows = db.getAllRows(sql(search_string), num)
+
   if rows.len == 0:
       echo "No rankings to print. Go rank some movies!"
 
+
   for i in 0..<rows.len:
-    echo &"[{i + 1}] {ranking_to_string(rows[i], true)}"
+    if order_by == "DESC":
+      echo &"[{i + 1}] {ranking_to_string(rows[i], true)}"
+    else:
+      echo &"[{rows.len - i}] {ranking_to_string(rows[i], true)}"
 
 
 proc insert_at_rank(movie: Row, rank: int, date = "") =
