@@ -40,6 +40,12 @@ proc decrypt_answer*(cmd: string): bool =
     return true
   return false
 
+proc set_option_to_value*(option: string, value: bool) =
+  let ind = option_names.find(option)
+
+  # Insert the correct enum value for this option.
+  if value: active_options.incl(SearchOptions(ind))
+  else: active_options.excl(SearchOptions(ind))
 
 proc set_options*() =
   # Just print lines at first to confirm everything
@@ -53,6 +59,7 @@ proc set_options*() =
   var
     cmd = receive_command()
     to_edit = cmd.toLower()
+    active = false
 
   discard decrypt_answer(cmd) # In case you need to quit at any point.
 
@@ -63,13 +70,8 @@ proc set_options*() =
     cmd = receive_command()
     if cmd.toLower() == "cancel": return # In case you changed your mind.
     try:
-      let
-        active = parseBool(cmd.toLower())
-        ind = option_names.find(to_edit)
-
-      # Insert the correct enum value for this option.
-      if active: active_options.incl(SearchOptions(ind))
-      else: active_options.excl(SearchOptions(ind))
-
+      active = parseBool(cmd.toLower())
     except ValueError: # Generic Excepts are bad practice
       echo "Invalid boolean value."
+
+    set_option_to_value(to_edit, active)
