@@ -6,6 +6,10 @@ import times
 import imdb
 import options
 
+# Type for the comparison procedure that takes in a
+# string and an int and returns a bool
+type cmpProc = proc(movie: string, rank: int): bool
+
 # Provided here again to avoid a circular import.
 proc receive_command*(): string =
   result = stdin.readLine
@@ -106,11 +110,66 @@ proc delete_movie(id: string) =
   db.exec(sql"DELETE FROM ranking WHERE id=?", id)
   db.exec(sql"UPDATE ranking SET rank = rank - 1 WHERE rank > ?", rank)
 
+
+# Compares a movie to the movie at rank rank.
+proc get_comparison(movie: string, rank: int): bool =
+  let comp = ranking_to_string(db.getRow(sql"SELECT * FROM ranking WHERE rank=?", rank))
+  echo &"Is {movie} > {comp}?"
+  let cmd = receive_command()
+
+  # This actually implicitly makes it so that blank strings are taken as "no"
+  if cmd != "":
+    result = decrypt_answer(cmd)
+
 # Val is the movie you're currently inserting.
 # This is the proc that actually does the work.
+proc get_movie_rank*(lower_bound, upper_bound: int, movie: string, comparison: cmpProc): int =
+  var
+    lower = lower_bound
+    upper = upper_bound
+    mid = (upper + lower) div 2
+    greater: bool # Whether A > B
+
+  while true:
+    # These first two if blocks handle edge cases.
+    # If the lower and upper bounds are the same we need to check to see if the
+    # found position is higher than the value we want to insert.
+    # If it is we insert before, if not we insert it after.
+    if lower == upper:
+      # Find out of the value is better than the lower value, which is
+      # the insertion point.
+      greater = comparison(movie, lower + 1)
+      result = if greater: lower + 1 else: lower
+      break
+
+    # If the lower is above the higher bound, then we insert at the lower
+    # position, this occurs when we have moved below the bottom of the array.
+    if lower > upper:
+      result = lower
+      break
+
+    # This is the normal binary search kind of algorithm
+    # If the value is above the one at this index, the lower bound is moved above
+    # the midpoint, otherwise the upper bound is moved below the midpoint.
+    mid = (upper + lower) div 2
+
+     # Find out of the value is better than the midpoint.
+     # Increase by one because algo 0 indexed but ranking 1 indexed.
+    greater = comparison(movie, mid + 1)
+    if greater: lower = mid + 1
+    else:
+      # Normally we might insert at the equality point but here's a secret
+      # mega pro tip. If we include code here for inserting at "mid point"
+      # it'll get inserted before, the same place as if we just decrease
+      # upper and then run the code above where lower > upper and we
+      # insert at the same point. Wow! I think. I didn't map it out very
+      # robustly.
+      upper = mid - 1
+
+
 proc rank_movie*(val: Row) =
   var
-    ans: bool # The answer to the posed question
+    ans: bool
     cmd: string # The input command
 
     # The movie we're inserting.
@@ -143,67 +202,8 @@ proc rank_movie*(val: Row) =
 
     # The indices on the lower and upper bounds for the insertion sort.
     upper = if num_ranked[0].isDigit(): parseInt(num_ranked) - 1 else: 0
-    mid = upper div 2
-    ind = -1
 
-    # The movie we're comparing to at the midpoint.
-    comparison = ranking_to_string(db.getRow(sql"SELECT * FROM ranking WHERE rank=?", mid))
-
-  while true:
-    # These first two if blocks handle edge cases.
-    # If the lower and upper bounds are the same we need to check to see if the
-    # found position is higher than the value we want to insert.
-    # If it is we insert before, if not we insert it after.
-    if lower == upper:
-      # Find out of the value is better than the lower value, which is
-      # the insertion point.
-      comparison = ranking_to_string(db.getRow(sql"SELECT * FROM ranking WHERE rank=?", lower + 1))
-      echo &"Is {new_movie} > {comparison}?"
-      cmd = receive_command()
-
-      # In case you change your mind about ranking this movie.
-      if cmd.toLower() == "cancel":
-        echo "Ranking canceled, returning."
-        return
-
-      if cmd != "":
-        ans = decrypt_answer(cmd)
-
-      ind = if ans: lower + 1 else: lower
-      break
-
-    # If the lower is above the higher bound, then we insert at the lower
-    # position, this occurs when we have moved below the bottom of the array.
-    if lower > upper:
-      ind = lower
-      break
-
-    # This is the normal binary search kind of algorithm
-    # If the value is above the one at this index, the lower bound is moved above
-    # the midpoint, otherwise the upper bound is moved below the midpoint.
-    mid = (upper + lower) div 2
-
-     # Find out of the value is better than the midpoint.
-     # Increase by one because algo 0 indexed but ranking 1 indexed.
-    comparison = ranking_to_string(db.getRow(sql"SELECT * FROM ranking WHERE rank=?", mid + 1))
-    echo &"Is {new_movie} > {comparison}?"
-    cmd = receive_command()
-
-    # In case you change your mind about ranking this movie.
-    if cmd.toLower() == "cancel":
-      echo "Ranking canceled, returning."
-      return
-
-    if cmd != "" and decrypt_answer(cmd):
-      lower = mid + 1
-    else:
-      # Normally we might insert at the equality point but here's a secret
-      # mega pro tip. If we include code here for inserting at "mid point"
-      # it'll get inserted before, the same place as if we just decrease
-      # upper and then run the code above where lower > upper and we
-      # insert at the same point. Wow! I think. I didn't map it out very
-      # robustly.
-      upper = mid - 1
+  let ind = get_movie_rank(lower, upper, new_movie, get_comparison)
 
   echo "What date did you watch this movie? (YYYY-MM-DD)"
   echo "Input \"N\" to skip."
@@ -220,7 +220,7 @@ proc rank_movie*(val: Row) =
       insert_at_rank(val, ind, dt.format("yyyy-MM-dd"))
     except TimeParseError:
       echo "Date not passed in the correct pattern, ignoring."
-
+      insert_at_rank(val, ind)
 
 proc clear_rankings*() =
   echo "Are you sure? This is irreversible."
