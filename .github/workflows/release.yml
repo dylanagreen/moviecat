@@ -8,10 +8,10 @@ on:
       - 'v*.*.*'
 
 env:
-  APP_NAME: 'APPNAME'
+  APP_NAME: 'moviecat'
   NIM_VERSION: 'stable'
-  MAINTAINER: 'MAINTAINER'
-  RELEASE_FILES: APPNAME LICENSE README.*
+  MAINTAINER: 'Dylan Green'
+  RELEASE_FILES: moviecat LICENSE.txt README.*
 
 jobs:
   build-artifact:
