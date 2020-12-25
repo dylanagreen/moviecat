@@ -7,6 +7,14 @@ import options
 import ranking
 
 
+let
+  version = "moviecat v0.1.0 - Calico"
+  author = "by Dylan Green"
+
+proc about() =
+  echo version
+  echo author
+
 proc receive_command*(): string =
   result = stdin.readLine
   # logging.debug("Input: ", result)
@@ -105,5 +113,7 @@ proc decrypt_command*(cmd: string) =
     clear_rankings()
   elif cmd.toLower() == "options":
     set_options()
+  elif cmd.toLower() == "about":
+    about()
   else:
     echo "Unrecognized command"
