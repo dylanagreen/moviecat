@@ -11,6 +11,12 @@ let
   version = "moviecat v0.1.0 - Calico"
   author = "by Dylan Green"
 
+# Cancel your current command.
+template is_cancel(cmd: string) =
+  if cmd.toLower() == "cancel":
+    echo "Cancelled operation."
+    return
+
 proc about() =
   echo version
   echo author
@@ -87,6 +93,7 @@ proc insert_movie(cmd: string) =
       bad = true
 
     discard i.decrypt_answer() # In case you pass "quit" and we need to quit.
+    i.is_cancel() # Returns if this is a cancel command.
     while bad:
       try:
         let ind = parseInt(i)
@@ -96,6 +103,7 @@ proc insert_movie(cmd: string) =
         echo "Bad integer passed. Try again."
         i = receive_command()
         discard i.decrypt_answer() # In case you pass "quit" and we need to quit.
+        i.is_cancel()
 
   echo &"You have selected {movie_row_to_string(found)}"
   rank_movie(found)
