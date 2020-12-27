@@ -90,7 +90,8 @@ proc initialize_movies*(name: string = "title.basics.tsv") =
 proc find_movie_db*(name: string, params: seq[string]): seq[Row] =
   # Need to insert the magic % wildcards before and after to search for names
   # that include the search string
-  var search_string = &"SELECT * FROM imdb_db WHERE name LIKE \'%{name}%\'"
+  var search_name = name.replace("'", "''") # For searching for apostrophes
+  var search_string = &"SELECT * FROM imdb_db WHERE name LIKE \'%{search_name}%\'"
 
   if params.len > 0:
     if "year" in params:
