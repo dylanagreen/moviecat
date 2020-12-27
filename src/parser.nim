@@ -95,6 +95,7 @@ proc insert_movie(cmd: string) =
       except:
         echo "Bad integer passed. Try again."
         i = receive_command()
+        discard i.decrypt_answer() # In case you pass "quit" and we need to quit.
 
   echo &"You have selected {movie_row_to_string(found)}"
   rank_movie(found)
