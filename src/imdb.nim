@@ -90,12 +90,23 @@ proc initialize_movies*(name: string = "title.basics.tsv") =
 proc find_movie_db*(name: string, params: seq[string]): seq[Row] =
   # Need to insert the magic % wildcards before and after to search for names
   # that include the search string
-  var search_name = name.replace("'", "''") # For searching for apostrophes
-  var search_string = &"SELECT * FROM imdb_db WHERE name LIKE \'%{search_name}%\'"
+  var search_name = name.replace("_", "\\_") # For searching for apostrophes
+  search_name = search_name.replace("%", "\\%")
 
-  if params.len > 0:
-    if "year" in params:
-      let year = params[params.find("year") + 1]
-      search_string = search_string & &" AND year={year}"
+  var
+    search_string = "SELECT * FROM imdb_db WHERE name LIKE ?"
+    prep = db.prepare(search_string)
 
-  result = db.getAllRows(sql(search_string))
+  if "year" in params:
+    let year = params[params.find("year") + 1]
+    search_string = search_string & &" AND year=?"
+
+    prep.finalize() # Finalize the random other prepared statement.
+    prep = db.prepare(search_string)
+    prep.bindParam(2, year)
+
+  prep.bindParam(1, &"%{search_name}%")
+  result = db.getAllRows(prep)
+
+  # If you don't do this the db will explode when you try do anything.
+  prep.finalize()
