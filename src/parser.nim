@@ -8,7 +8,7 @@ import ranking
 
 
 let
-  version = "moviecat v0.1.0 - Calico"
+  version = "moviecat v0.1.1 - Calico"
   author = "by Dylan Green"
 
 # Cancel your current command.
