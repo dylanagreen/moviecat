@@ -175,16 +175,18 @@ proc rank_movie*(val: Row) =
     # The movie we're inserting.
     new_movie = movie_row_to_string(val)
 
-    # Whether or not we've already ranked this movie.
-    found = db.getRow(sql"SELECT * FROM ranking WHERE id=?", val[0])[0] != ""
+    # Check to see if we've ranked the movie already by pulling it out of the
+    # ranking table. This will return an empty string if we have not
+    # rank the movie yet.
+    found = db.getRow(sql"SELECT * FROM ranking WHERE id=?", val[0])
 
   # We must check for found before finding indices since if we overwrite we will
   # delete the movie and move everything ranked higher down, reducing the length
   # by one as well. We must check for this, because id serves as a unique key
   # in the sql database and trying to rank a movie that is already ranked
   # without removing it will cause an exception due to an id clash.
-  if found:
-    echo &"You have already ranked {new_movie}"
+  if found[0] != "":
+    echo &"You have already ranked {new_movie} at rank {found[1]}"
     echo "Would you like to rerank this movie? Note: You will overwrite the old ranking."
     cmd = receive_command()
     ans = decrypt_answer(cmd)
