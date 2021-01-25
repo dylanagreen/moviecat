@@ -66,26 +66,23 @@ proc refine_search(): seq[string] =
       result.add($year)
 
 
-proc find_movie(cmd: string): seq[Row] =
+proc find_movie(cmd: string): Row =
+  var movies: seq[Row]
   let search = cmd.split(' ')
   if search.len < 2:
     echo "Did you forget to pass a movie name to look for?"
     return
   else:
     let search_params = refine_search()
-    result = find_movie_db(search[1..^1].join(" "), search_params)
+    movies = find_movie_db(search[1..^1].join(" "), search_params)
     echo "Found these movies:"
-    for i in 0..<result.len:
-      echo &"[{i}] {movie_row_to_string(result[i])}"
+    for i in 0..<movies.len:
+      echo &"[{i}] {movie_row_to_string(movies[i])}"
 
-
-proc insert_movie(cmd: string) =
-  let movies = find_movie(cmd)
-  var found: Row # The movie we decided to insert.
   if movies.len < 1:
     return # Aw sad no movies.
   elif movies.len == 1:
-    found = movies[0] # Yay one movie!
+    result = movies[0] # Yay one movie!
   else: # Uh oh lots of movies please tell me which one
     echo "Which movie did you want?"
     var
@@ -97,7 +94,7 @@ proc insert_movie(cmd: string) =
     while bad:
       try:
         let ind = parseInt(i)
-        found = movies[ind]
+        result = movies[ind]
         bad = false
       except:
         echo "Bad integer passed. Try again."
@@ -105,8 +102,14 @@ proc insert_movie(cmd: string) =
         discard i.decrypt_answer() # In case you pass "quit" and we need to quit.
         i.is_cancel()
 
-  echo &"You have selected {movie_row_to_string(found)}"
-  rank_movie(found)
+  echo &"You have selected:"
+  echo pretty_print_movie(result)
+
+
+proc insert_movie(cmd: string) =
+  let movie = find_movie(cmd)
+  if movie.len > 0:
+    rank_movie(movie)
 
 
 proc decrypt_command*(cmd: string) =
