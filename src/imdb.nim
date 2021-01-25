@@ -14,7 +14,7 @@ let db* = open(getAppDir() / "cat.db", "", "", "")
 
 # I keep this line here for testing rebuilding the imdb database from scratch.
 # db.exec(sql"DROP TABLE IF EXISTS imdb_db")
-# db.exec(sql"DROP TABLE IF EXISTS directors")
+# db.exec(sql"DROP TABLE IF EXISTS people")
 # db.exec(sql"DROP TABLE IF EXISTS ranking")
 
 
@@ -28,18 +28,86 @@ proc movie_row_to_string*(movie: Row): string =
 proc pretty_print_movie*(movie: Row): string =
   result = &"{movie[1]} ({movie[2]})\n"
 
+  # Getting the director from the relation table
   let director = db.getAllRows(sql"SELECT director FROM directors WHERE movie=?", movie[0])
-  result &= $director
-  # if director.len > 1:
-  #   result &= &"Directors: {director[1]}"
-  # else:
-  #   result &= &"Director: {director[1]}"
+  var name = ""
+  # echo direct_names
+  if director.len > 1:
+    for i, d in director:
+      name &= db.getRow(sql"SELECT name FROM people WHERE id=?", d)[0]
+
+      if i < (director.len - 1):
+        name &= ", "
+  else:
+    name = db.getRow(sql"SELECT name FROM people WHERE id=?", director[0])[0]
+
+  result &= &"Director: {name}\n"
+
+
+proc initialize_people*(name: string = "name.basics.tsv") =
+  # Checks to see if the table already exists and if it does we bail
+  if db.getValue(sql"SELECT name FROM sqlite_master WHERE type='table' AND name='people'") != "":
+    echo "People table detected"
+    return
+
+  # For future reference note that format of the tsv is as follows for the header:
+  # tconst, movie, primarytitle, originaltitle, isadult, startyear, endyear, runtime, genres
+  # Original title is the original language form of the title
+  let loc = getAppDir() / name
+  # Idiot proofing.
+  if not fileExists(loc):
+    # logging.error("File not found!")
+    # logging.error(&"Attempted to load {name}")
+    raise newException(IOError, &"File {loc} not found!")
+
+  # If we got here then the table doesn't exist so we will create it.
+  # Gonna throw in a if not exists justtttt in case.
+  db.exec(sql"""CREATE TABLE IF NOT EXISTS people (
+                 id   TEXT PRIMARY KEY,
+                 name TEXT NOT NULL
+              )""")
+
+  var parser: CSVParser
+  parser.open(loc, separator='\t', quote='\0')
+  # For future reference so we know file loading succeeded
+  # logging.debug(&"Loaded IMDB file: {name}")
+
+  let directors = map(db.getAllRows(sql"SELECT director FROM directors"), proc(x: Row): string = x[0]).toHashSet
+
+  # Discarding the true or false row exists boolean
+  discard parser.readRow()
+  let
+    cols = parser.row
+    id = cols.find("nconst")
+    title = cols.find("primaryName")
+
+
+  var prep = db.prepare("INSERT INTO people (id, name) VALUES (?, ?)")
+  db.exec(sql"BEGIN TRANSACTION")
+
+  while parser.readRow():
+    # Skip people who didn't direct a movie.
+    if not(parser.row[id] in directors): continue
+    # Bind parameters to the prepared statement.
+    prep.bind_param(1, parser.row[id])
+    prep.bind_param(2, parser.row[title])
+
+    db.exec(prep)
+    discard reset(prep.PStmt)
+
+  db.exec(sql"END TRANSACTION")
+
+  # If you don't do this the db will explode when you try do anything.
+  prep.finalize()
+
+  # Always want to close when you're done for memory purposes!
+  parser.close()
 
 
 proc initialize_directors*(name: string = "title.crew.tsv") =
   # Checks to see if the table already exists and if it does we bail
   if db.getValue(sql"SELECT name FROM sqlite_master WHERE type='table' AND name='directors'") != "":
-    echo "Directors data table detected"
+    echo "Directors table detected"
     return
 
   let loc = getAppDir() / name
@@ -102,7 +170,7 @@ proc initialize_directors*(name: string = "title.crew.tsv") =
 proc initialize_movies*(name: string = "title.basics.tsv") =
   # Checks to see if the table already exists and if it does we bail
   if db.getValue(sql"SELECT name FROM sqlite_master WHERE type='table' AND name='imdb_db'") != "":
-    echo "IMDB data table detected"
+    echo "Movies table detected"
     return
 
   # For future reference note that format of the tsv is as follows for the header:
