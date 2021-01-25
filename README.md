@@ -16,6 +16,12 @@ Casablanca as compared to each movie. Things like that.
 Moviecat should compile just fine without any dependencies, although if you want
 to actually run it you'll need sqlite.
 
+Moviecat also requires you download the imdb datasets from https://datasets.imdbws.com.
+You will need `title.basics.tsv`, `title.crew.tsv` and `name.basics.tsv` in the same
+directory that the moviecat binary is in.
+These are only needed for initial startup as the information is ported to an internal
+sqlite database.
+
 ## Compiling moviecat
 
 To compile moviecat run the following:

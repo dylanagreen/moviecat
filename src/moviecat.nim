@@ -14,6 +14,8 @@ var cmd: string
 echo "Initializing db, please hold a moment..."
 var t1 = cpuTime()
 initialize_movies() # Actually initializes the database.
+initialize_directors()
+
 var
   num = db.getValue(sql"SELECT COUNT(ALL) from imdb_db")
   t2 = cpuTime()

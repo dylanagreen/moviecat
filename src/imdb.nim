@@ -4,15 +4,17 @@ import db_sqlite
 import os
 import parsecsv
 import sqlite3
+import sequtils
+import sets
 import strutils
 import strformat
 import system
-
 
 let db* = open(getAppDir() / "cat.db", "", "", "")
 
 # I keep this line here for testing rebuilding the imdb database from scratch.
 # db.exec(sql"DROP TABLE IF EXISTS imdb_db")
+# db.exec(sql"DROP TABLE IF EXISTS directors")
 # db.exec(sql"DROP TABLE IF EXISTS ranking")
 
 
@@ -22,6 +24,80 @@ let db* = open(getAppDir() / "cat.db", "", "", "")
 proc movie_row_to_string*(movie: Row): string =
   result = &"({movie[0]}) {movie[1]}, {movie[2]}"
 
+# Prints details in a pretty format instead of a single line string.
+proc pretty_print_movie*(movie: Row): string =
+  result = &"{movie[1]} ({movie[2]})\n"
+
+  let director = db.getAllRows(sql"SELECT director FROM directors WHERE movie=?", movie[0])
+  result &= $director
+  # if director.len > 1:
+  #   result &= &"Directors: {director[1]}"
+  # else:
+  #   result &= &"Director: {director[1]}"
+
+
+proc initialize_directors*(name: string = "title.crew.tsv") =
+  # Checks to see if the table already exists and if it does we bail
+  if db.getValue(sql"SELECT name FROM sqlite_master WHERE type='table' AND name='directors'") != "":
+    echo "Directors data table detected"
+    return
+
+  let loc = getAppDir() / name
+  # Idiot proofing.
+  if not fileExists(loc):
+    # logging.error("File not found!")
+    # logging.error(&"Attempted to load {name}")
+    raise newException(IOError, &"File {loc} not found!")
+
+  # Now make the directors table.
+  # We use a movie/director combination as a primary key, which ensures
+  # that each relation is unique, but allows multiple instances of
+  # movies and directors (useful since a director could direct more than one
+  # movie and a movie could have more than one director.)
+  db.exec(sql"""CREATE TABLE IF NOT EXISTS directors (
+                 movie TEXT REFERENCES imdb_db(id) ON DELETE CASCADE,
+                 director TEXT,
+                 PRIMARY KEY (movie, director)
+              )""")
+
+  var parser: CSVParser
+  parser.open(loc, separator='\t', quote='\0')
+
+  let movies = map(db.getAllRows(sql"SELECT id FROM imdb_db"), proc(x: Row): string = x[0]).toHashSet
+  # echo movies
+
+  # Discarding the true or false row exists boolean
+  discard parser.readRow()
+  let
+    cols = parser.row
+    id = cols.find("tconst")
+    directors = cols.find("directors")
+
+  var prep = db.prepare("INSERT INTO directors (movie, director) VALUES (?, ?)")
+  db.exec(sql"BEGIN TRANSACTION")
+
+  while parser.readRow():
+    # Skip ids that aren't movies
+    if not(parser.row[id] in movies): continue
+    # Movies might have more than one director, this ensures we insert all
+    # of them into the directors table.
+    let inner_directors = parser.row[directors].split(",")
+    for dir in inner_directors:
+      prep.bind_param(1, parser.row[id])
+      prep.bind_param(2, dir)
+
+      db.exec(prep)
+      discard reset(prep.PStmt)
+
+  db.exec(sql"END TRANSACTION")
+
+  # If you don't do this the db will explode when you try do anything.
+  prep.finalize()
+
+  # Always want to close when you're done for memory purposes!
+  parser.close()
+
+  # db.exec(sql"DELETE FROM directors WHERE (SELECT movie FROM directors) NOT IN (SELECT id FROM imdb_db")
 
 proc initialize_movies*(name: string = "title.basics.tsv") =
   # Checks to see if the table already exists and if it does we bail
@@ -52,6 +128,7 @@ proc initialize_movies*(name: string = "title.basics.tsv") =
   # For future reference so we know file loading succeeded
   # logging.debug(&"Loaded IMDB file: {name}")
 
+  # Discarding the true or false row exists boolean
   discard parser.readRow()
   let
     cols = parser.row
