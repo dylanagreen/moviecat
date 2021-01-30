@@ -6,6 +6,8 @@ import times
 import imdb
 import options
 
+import ui_helper
+
 # Type for the comparison procedure that takes in a
 # string and an int and returns a bool
 type cmpProc = proc(movie: string, rank: int): bool
@@ -33,6 +35,7 @@ proc print_rankings*(cmd: string) =
   var
     num = 10
     year = 0
+    director = "" # Order by director
     search_string = ""
     order_by = "DESC"
     where_clause = ""
@@ -68,11 +71,30 @@ proc print_rankings*(cmd: string) =
           year = 0
           echo "Invalid year to print, defaulting to all years."
 
-      except ValueError:
+      # Index defect when we don't pass a year at all lol.
+      except ValueError, IndexDefect:
         echo "Invalid year to print, defaulting to all years."
 
       if year > 0:
         where_clause = &" WHERE A.id in (SELECT B.id FROM imdb_db B WHERE B.year={year})"
+
+    if "director" in vals:
+      try:
+        director = vals[vals.find("director") + 1..^1].join(" ")
+
+        # Didn't find a director that you passed so tell the user.
+        if director == "": echo "Invalid director to print, defaulting to all directors."
+        else:
+          let dirid = identify_person(find_person(director))[0]
+
+          if len(dirid) == 0:
+            echo "Director not found!"
+          else:
+            where_clause = &" WHERE A.id in (SELECT B.movie FROM directors B WHERE B.director=\"{dirid}\")"
+
+      # Will also trigger if identify person returns an empty container.
+      except IndexDefect:
+        echo "Invalid director to print, defaulting to all directors."
 
   search_string = &"SELECT A.* FROM ranking A{where_clause} ORDER BY rank {order_by} LIMIT ?"
   rows = db.getAllRows(sql(search_string), num)

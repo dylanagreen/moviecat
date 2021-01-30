@@ -24,6 +24,10 @@ let db* = open(getAppDir() / "cat.db", "", "", "")
 proc movie_row_to_string*(movie: Row): string =
   result = &"({movie[0]}) {movie[1]}, {movie[2]}"
 
+proc person_row_to_string*(person: Row): string =
+  result = &"({person[0]}) {person[1]}"
+
+
 # Prints details in a pretty format instead of a single line string.
 proc pretty_print_movie*(movie: Row): string =
   result = &"{movie[1]} ({movie[2]})\n"
@@ -251,6 +255,17 @@ proc find_movie_db*(name: string, params: seq[string]): seq[Row] =
     prep.bindParam(2, year)
 
   prep.bindParam(1, &"%{search_name}%")
+  result = db.getAllRows(prep)
+
+  # If you don't do this the db will explode when you try do anything.
+  prep.finalize()
+
+
+proc find_person*(name: string): seq[Row] =
+  let search_string = "SELECT * FROM people WHERE name LIKE ?"
+  var prep = db.prepare(search_string)
+
+  prep.bindParam(1, &"%{name}%")
   result = db.getAllRows(prep)
 
   # If you don't do this the db will explode when you try do anything.
