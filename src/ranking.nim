@@ -1,4 +1,5 @@
 import db_sqlite
+import sequtils
 import strformat
 import strutils
 import times
@@ -21,11 +22,11 @@ proc ranking_to_string(ranking: Row, watched=false): string =
 
 
 proc print_rankings*(cmd: string) =
-  let vals = cmd.split(' ')
-  var rows: seq[Row]
-
-  # Number of movies to print.
   var
+    vals = cmd.split(' ')
+    rows: seq[Row]
+
+    # Number of movies to print.
     num = 10
     year = 0
     director = "" # Order by director
@@ -69,21 +70,25 @@ proc print_rankings*(cmd: string) =
         echo "Invalid year to print, defaulting to all years."
 
       if year > 0:
-        where_clause = &" WHERE A.id in (SELECT B.id FROM imdb_db B WHERE B.year={year})"
+        where_clause &= &" WHERE A.id in (SELECT B.id FROM imdb_db B WHERE B.year={year})"
 
     if "director" in vals:
       try:
-        director = vals[vals.find("director") + 1..^1].join(" ")
+        vals = cmd.split('"')
+        let val_contains = map(vals, proc(x: string): bool = x.contains("director"))
+        director = vals[val_contains.find(true) + 1]
 
         # Didn't find a director that you passed so tell the user.
-        if director == "": echo "Invalid director to print, defaulting to all directors."
+        if director == "": echo "Invalid director to print. Did you forget quotation marks?"
         else:
           let dirid = refine_choices(find_person(director), "people")[0]
 
           if len(dirid) == 0:
             echo "Director not found!"
           else:
-            where_clause = &" WHERE A.id in (SELECT B.movie FROM directors B WHERE B.director=\"{dirid}\")"
+            # For if you're printing year AND director.
+            let join = if "WHERE" in where_clause: "AND" else: "WHERE"
+            where_clause &= &" {join} A.id in (SELECT B.movie FROM directors B WHERE B.director=\"{dirid}\")"
 
       # Will also trigger if identify person returns an empty container.
       except IndexDefect:
