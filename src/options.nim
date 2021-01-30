@@ -1,11 +1,10 @@
-import db_sqlite
 import marshal
 import os
 import streams
 import strformat
 import strutils
 
-import imdb
+import ui_helper
 
 # Option related enum and set/seq
 type SearchOptions* = enum
@@ -14,31 +13,12 @@ type SearchOptions* = enum
 var active_options*: set[SearchOptions]
 let option_names*: array[1, string] = ["year"]
 
-# It's fine to duplicate this I think lol.
-proc receive_command*(): string =
-  result = stdin.readLine
-
-proc shutdown*() =
-  # Close the database
-  db.close()
-
+proc save_options*() =
   # Save the options to a file
   let options_loc = getAppDir() / "options.txt"
   var out_strm = newFileStream(options_loc, fmWrite)
   out_strm.store(active_options)
   out_strm.close()
-
-  # Quit.
-  quit()
-
-# Finds yes or no answers, quits if you want to quit.
-proc decrypt_answer*(cmd: string): bool =
-  # Always need to be able to quit
-  if cmd.toLower() == "quit":
-    shutdown()
-  elif cmd.toLower() == "yes" or cmd.toLower() == "y":
-    return true
-  return false
 
 proc set_option_to_value*(option: string, value: bool) =
   let ind = option_names.find(option)
@@ -75,3 +55,6 @@ proc set_options*() =
       echo "Invalid boolean value."
 
     set_option_to_value(to_edit, active)
+
+  # Save the changes
+  save_options()

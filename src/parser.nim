@@ -5,26 +5,15 @@ import strutils
 import imdb
 import options
 import ranking
-
+import ui_helper
 
 let
   version = "moviecat v0.1.1 - Calico"
   author = "by Dylan Green"
 
-# Cancel your current command.
-template is_cancel(cmd: string) =
-  if cmd.toLower() == "cancel":
-    echo "Cancelled operation."
-    return
-
 proc about() =
   echo version
   echo author
-
-proc receive_command*(): string =
-  result = stdin.readLine
-  # logging.debug("Input: ", result)
-
 
 proc refine_search(): seq[string] =
   # In this case there are no refine options that are active.

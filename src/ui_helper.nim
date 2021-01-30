@@ -2,14 +2,34 @@ import db_sqlite
 import strformat
 import strutils
 
-import options
 import imdb
 
 # Cancel your current command.
-template is_cancel(cmd: string) =
+template is_cancel*(cmd: string) =
   if cmd.toLower() == "cancel":
     echo "Cancelled operation."
     return
+
+
+proc shutdown*() =
+  # Close the database
+  db.close()
+  # Quit.
+  quit()
+
+
+# Finds yes or no answers, quits if you want to quit.
+proc decrypt_answer*(cmd: string): bool =
+  # Always need to be able to quit
+  if cmd.toLower() == "quit":
+    shutdown()
+  elif cmd.toLower() == "yes" or cmd.toLower() == "y":
+    return true
+  return false
+
+# It's fine to duplicate this I think lol.
+proc receive_command*(): string =
+  result = stdin.readLine
 
 
 proc identify_person*(people: seq[Row]): Row =

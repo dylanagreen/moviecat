@@ -4,18 +4,11 @@ import strutils
 import times
 
 import imdb
-import options
-
 import ui_helper
 
 # Type for the comparison procedure that takes in a
 # string and an int and returns a bool
 type cmpProc = proc(movie: string, rank: int): bool
-
-# Provided here again to avoid a circular import.
-proc receive_command*(): string =
-  result = stdin.readLine
-  # logging.debug("Input: ", result)
 
 
 # Find the movie in the movie db that corresponds to the id in this ranking.

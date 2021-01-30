@@ -8,6 +8,7 @@ import times
 import imdb
 import options
 import parser
+import ui_helper
 
 var cmd: string
 
@@ -48,7 +49,7 @@ echo &"You have ranked {num_ranked} movies!"
 
 while true:
   echo &"What would you like to do?"
-  cmd = parser.receive_command()
+  cmd = receive_command()
 
   if cmd != "":
     decrypt_command(cmd)
