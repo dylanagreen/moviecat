@@ -41,16 +41,14 @@ proc refine_choices*(values: seq[Row], dtype: string): Row =
     print_proc = person_row_to_string
   else:
     print_proc = movie_row_to_string
-
-  echo &"Found these {dtype}:"
-  for i in 0..<values.len:
-    echo &"[{i}] {print_proc(values[i])}"
-
   if values.len < 1:
     return # Aw sad no movies.
   elif values.len == 1:
     result = values[0] # Yay one movie!
   else: # Uh oh lots of choices please tell me which one
+    echo &"Found these {dtype}:"
+    for i in 0..<values.len:
+      echo &"[{i}] {print_proc(values[i])}"
     echo "Which did you want?"
     var
       i = receive_command()
