@@ -64,35 +64,8 @@ proc find_movie(cmd: string): Row =
   else:
     let search_params = refine_search()
     movies = find_movie_db(search[1..^1].join(" "), search_params)
-    echo "Found these movies:"
-    for i in 0..<movies.len:
-      echo &"[{i}] {movie_row_to_string(movies[i])}"
 
-  if movies.len < 1:
-    return # Aw sad no movies.
-  elif movies.len == 1:
-    result = movies[0] # Yay one movie!
-  else: # Uh oh lots of movies please tell me which one
-    echo "Which movie did you want?"
-    var
-      i = receive_command()
-      bad = true
-
-    discard i.decrypt_answer() # In case you pass "quit" and we need to quit.
-    i.is_cancel() # Returns if this is a cancel command.
-    while bad:
-      try:
-        let ind = parseInt(i)
-        result = movies[ind]
-        bad = false
-      except:
-        echo "Bad integer passed. Try again."
-        i = receive_command()
-        discard i.decrypt_answer() # In case you pass "quit" and we need to quit.
-        i.is_cancel()
-
-  echo &"You have selected:"
-  echo pretty_print_movie(result)
+  refine_choices(movies, "movies")
 
 
 proc insert_movie(cmd: string) =

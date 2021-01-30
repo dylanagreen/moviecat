@@ -4,6 +4,8 @@ import strutils
 
 import imdb
 
+type row_to_string* = proc(row: Row): string
+
 # Cancel your current command.
 template is_cancel*(cmd: string) =
   if cmd.toLower() == "cancel":
@@ -32,17 +34,24 @@ proc receive_command*(): string =
   result = stdin.readLine
 
 
-proc identify_person*(people: seq[Row]): Row =
-  echo "Found these people:"
-  for i in 0..<people.len:
-    echo &"[{i}] {person_row_to_string(people[i])}"
+proc refine_choices*(values: seq[Row], dtype: string): Row =
+  # Need to use the write print proc depending on what's in the rows.
+  var print_proc: row_to_string
+  if dtype == "people":
+    print_proc = person_row_to_string
+  else:
+    print_proc = movie_row_to_string
 
-  if people.len < 1:
+  echo &"Found these {dtype}:"
+  for i in 0..<values.len:
+    echo &"[{i}] {print_proc(values[i])}"
+
+  if values.len < 1:
     return # Aw sad no movies.
-  elif people.len == 1:
-    result = people[0] # Yay one movie!
-  else: # Uh oh lots of movies please tell me which one
-    echo "Which person did you want?"
+  elif values.len == 1:
+    result = values[0] # Yay one movie!
+  else: # Uh oh lots of choices please tell me which one
+    echo "Which did you want?"
     var
       i = receive_command()
       bad = true
@@ -52,7 +61,7 @@ proc identify_person*(people: seq[Row]): Row =
     while bad:
       try:
         let ind = parseInt(i)
-        result = people[ind]
+        result = values[ind]
         bad = false
       except:
         echo "Bad integer passed. Try again."
@@ -61,4 +70,4 @@ proc identify_person*(people: seq[Row]): Row =
         i.is_cancel()
 
   echo &"You have selected:"
-  echo person_row_to_string(result)
+  echo print_proc(result)

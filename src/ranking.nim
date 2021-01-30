@@ -78,7 +78,7 @@ proc print_rankings*(cmd: string) =
         # Didn't find a director that you passed so tell the user.
         if director == "": echo "Invalid director to print, defaulting to all directors."
         else:
-          let dirid = identify_person(find_person(director))[0]
+          let dirid = refine_choices(find_person(director), "people")[0]
 
           if len(dirid) == 0:
             echo "Director not found!"
