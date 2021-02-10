@@ -93,6 +93,7 @@ proc print_rankings*(cmd: string) =
       # Will also trigger if identify person returns an empty container.
       except IndexDefect:
         echo "Invalid director to print, defaulting to all directors."
+        echo "You may have forgot to enclose your director in quotation marks."
 
   search_string = &"SELECT A.* FROM ranking A{where_clause} ORDER BY rank {order_by} LIMIT ?"
   rows = db.getAllRows(sql(search_string), num)
