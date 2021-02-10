@@ -34,18 +34,18 @@ proc pretty_print_movie*(movie: Row): string =
 
   # Getting the director from the relation table
   let director = db.getAllRows(sql"SELECT director FROM directors WHERE movie=?", movie[0])
-  var name = ""
-  # echo direct_names
+  var dir_name = ""
+
   if director.len > 1:
     for i, d in director:
-      name &= db.getRow(sql"SELECT name FROM people WHERE id=?", d)[0]
+      dir_name &= db.getRow(sql"SELECT name FROM people WHERE id=?", d)[0]
 
       if i < (director.len - 1):
-        name &= ", "
+        dir_name &= ", "
   else:
-    name = db.getRow(sql"SELECT name FROM people WHERE id=?", director[0])[0]
+    dir_name = db.getRow(sql"SELECT name FROM people WHERE id=?", director[0])[0]
 
-  result &= &"Director: {name}\n"
+  result &= &"Director: {dir_name}\n"
 
 
 proc initialize_people*(name: string = "name.basics.tsv") =
@@ -77,6 +77,7 @@ proc initialize_people*(name: string = "name.basics.tsv") =
   # logging.debug(&"Loaded IMDB file: {name}")
 
   let directors = map(db.getAllRows(sql"SELECT director FROM directors"), proc(x: Row): string = x[0]).toHashSet
+  let writers = map(db.getAllRows(sql"SELECT writer FROM writers"), proc(x: Row): string = x[0]).toHashSet
 
   # Discarding the true or false row exists boolean
   discard parser.readRow()
@@ -90,8 +91,8 @@ proc initialize_people*(name: string = "name.basics.tsv") =
   db.exec(sql"BEGIN TRANSACTION")
 
   while parser.readRow():
-    # Skip people who didn't direct a movie.
-    if not(parser.row[id] in directors): continue
+    # Skip people who didn't direct or write a movie.
+    if not((parser.row[id] in directors) or (parser.row[id] in writers)): continue
     # Bind parameters to the prepared statement.
     prep.bind_param(1, parser.row[id])
     prep.bind_param(2, parser.row[title])
@@ -107,11 +108,13 @@ proc initialize_people*(name: string = "name.basics.tsv") =
   # Always want to close when you're done for memory purposes!
   parser.close()
 
+  echo "People table created"
 
-proc initialize_directors*(name: string = "title.crew.tsv") =
+
+proc initialize_crew*(name: string = "title.crew.tsv", crew="director") =
   # Checks to see if the table already exists and if it does we bail
-  if db.getValue(sql"SELECT name FROM sqlite_master WHERE type='table' AND name='directors'") != "":
-    echo "Directors table detected"
+  if db.getValue(sql(&"SELECT name FROM sqlite_master WHERE type='table' AND name='{crew}s'")) != "":
+    echo &"{crew}s table detected"
     return
 
   let loc = getAppDir() / name
@@ -122,15 +125,15 @@ proc initialize_directors*(name: string = "title.crew.tsv") =
     raise newException(IOError, &"File {loc} not found!")
 
   # Now make the directors table.
-  # We use a movie/director combination as a primary key, which ensures
+  # We use a movie/crew combination as a primary key, which ensures
   # that each relation is unique, but allows multiple instances of
-  # movies and directors (useful since a director could direct more than one
-  # movie and a movie could have more than one director.)
-  db.exec(sql"""CREATE TABLE IF NOT EXISTS directors (
+  # movies and crew (useful since a crew could direct/write more than one
+  # movie and a movie could have more than one writer/director.)
+  db.exec(sql(&"""CREATE TABLE IF NOT EXISTS {crew}s (
                  movie TEXT REFERENCES imdb_db(id) ON DELETE CASCADE,
-                 director TEXT,
-                 PRIMARY KEY (movie, director)
-              )""")
+                 {crew} TEXT,
+                 PRIMARY KEY (movie, {crew})
+              )"""))
 
   var parser: CSVParser
   parser.open(loc, separator='\t', quote='\0')
@@ -143,9 +146,9 @@ proc initialize_directors*(name: string = "title.crew.tsv") =
   let
     cols = parser.row
     id = cols.find("tconst")
-    directors = cols.find("directors")
+    crew_person = cols.find(&"{crew}s")
 
-  var prep = db.prepare("INSERT INTO directors (movie, director) VALUES (?, ?)")
+  var prep = db.prepare(&"INSERT INTO {crew}s (movie, {crew}) VALUES (?, ?)")
   db.exec(sql"BEGIN TRANSACTION")
 
   while parser.readRow():
@@ -153,10 +156,10 @@ proc initialize_directors*(name: string = "title.crew.tsv") =
     if not(parser.row[id] in movies): continue
     # Movies might have more than one director, this ensures we insert all
     # of them into the directors table.
-    let inner_directors = parser.row[directors].split(",")
-    for dir in inner_directors:
+    let inner_crews = parser.row[crew_person].split(",")
+    for c in inner_crews:
       prep.bind_param(1, parser.row[id])
-      prep.bind_param(2, dir)
+      prep.bind_param(2, c)
 
       db.exec(prep)
       discard reset(prep.PStmt)
@@ -169,7 +172,7 @@ proc initialize_directors*(name: string = "title.crew.tsv") =
   # Always want to close when you're done for memory purposes!
   parser.close()
 
-  # db.exec(sql"DELETE FROM directors WHERE (SELECT movie FROM directors) NOT IN (SELECT id FROM imdb_db")
+  echo &"{crew}s table created"
 
 proc initialize_movies*(name: string = "title.basics.tsv") =
   # Checks to see if the table already exists and if it does we bail

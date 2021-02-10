@@ -15,7 +15,12 @@ var cmd: string
 echo "Initializing db, please hold a moment..."
 var t1 = cpuTime()
 initialize_movies() # Actually initializes the database.
-initialize_directors()
+
+# Load the directors and writers here.
+# Do the link table first since we only load the people who
+# direct or write, not act.
+initialize_crew(crew="director")
+initialize_crew(crew="writer")
 initialize_people()
 
 var
