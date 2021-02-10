@@ -1,4 +1,5 @@
 import db_sqlite
+import sequtils
 import strformat
 import strutils
 
@@ -30,11 +31,11 @@ proc refine_search(): seq[string] =
   var
     cmd = receive_command()
     year = 0
+    director = ""
+    vals = cmd.split(' ')
 
   if cmd.toLower() == "n":
     return
-
-  let vals = cmd.split(' ')
 
   # Refining by year. Not the best way to do this just yet, but can be easily
   # refactored later when adding more search refinements.
@@ -53,6 +54,28 @@ proc refine_search(): seq[string] =
     if year > 0:
       result.add("year")
       result.add($year)
+
+  if "director" in vals:
+    try:
+      vals = cmd.split('"')
+      let val_contains = map(vals, proc(x: string): bool = x.contains("director"))
+      director = vals[val_contains.find(true) + 1]
+
+      # Didn't find a director that you passed so tell the user.
+      if director == "": echo "Invalid director to print. Did you forget quotation marks?"
+      else:
+        let dirid = refine_choices(find_person(director), "people")[0]
+
+        if len(dirid) == 0:
+          echo "Director not found!"
+        else:
+          result.add("director")
+          result.add(dirid)
+
+    # Will also trigger if identify person returns an empty container.
+    except IndexDefect:
+      echo "Invalid director to print, defaulting to all directors."
+      echo "You may have forgot to enclose your director in quotation marks."
 
 
 proc find_movie(cmd: string): Row =

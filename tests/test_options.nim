@@ -48,3 +48,14 @@ suite "test options":
 
     expected.excl(SearchOptions.BYYEAR)
     doAssert active_options == expected
+
+  test "year, director -> true":
+    set_option_to_value("year", true)
+    set_option_to_value("director", true)
+
+    # Set up the expected to include year as true.
+    var expected: set[SearchOptions]
+    expected.incl(SearchOptions.BYYEAR)
+    expected.incl(SearchOptions.BYDIRECTOR)
+
+    doAssert active_options == expected

@@ -243,16 +243,25 @@ proc find_movie_db*(name: string, params: seq[string]): seq[Row] =
   search_name = search_name.replace("%", "\\%")
 
   var
-    search_string = "SELECT * FROM imdb_db WHERE name LIKE ?"
+    search_string = "SELECT * FROM imdb_db A WHERE A.name LIKE ?"
     prep = db.prepare(search_string)
 
   if "year" in params:
     let year = params[params.find("year") + 1]
-    search_string = search_string & &" AND year=?"
+    search_string = search_string & &" AND A.year=?"
 
     prep.finalize() # Finalize the random other prepared statement.
     prep = db.prepare(search_string)
     prep.bindParam(2, year)
+
+  # I guess this means director overrides year, note to self change that.
+  if "director" in params:
+    let director = params[params.find("director") + 1]
+    search_string &= "AND A.id in (SELECT B.movie FROM directors B WHERE B.director=?)"
+
+    prep.finalize() # Finalize the random other prepared statement.
+    prep = db.prepare(search_string)
+    prep.bindParam(2, director)
 
   prep.bindParam(1, &"%{search_name}%")
   result = db.getAllRows(prep)
