@@ -1,10 +1,10 @@
 import db_sqlite
-import sequtils
 import strformat
 import strutils
 import times
 
 import imdb
+import search
 import ui_helper
 
 # Type for the comparison procedure that takes in a
@@ -28,8 +28,6 @@ proc print_rankings*(cmd: string) =
 
     # Number of movies to print.
     num = 10
-    year = 0
-    director = "" # Order by director
     search_string = ""
     order_by = "DESC"
     where_clause = ""
@@ -56,44 +54,15 @@ proc print_rankings*(cmd: string) =
           echo "Invalid number to print, defaulting to bottom 10."
       except: # Will catch both index out of bounds (no value) or value error
         echo "Invalid number to print, defaulting to bottom 10."
-    if "year" in vals:
-      try:
-        year = parseInt(vals[vals.find("year") + 1])
 
-        # Catch passing negative years.
-        if year < 0:
-          year = 0
-          echo "Invalid year to print, defaulting to all years."
+    var details = extract_val(cmd, "year")
+    if details.success:
+      where_clause &= &" WHERE A.id in (SELECT B.id FROM imdb_db B WHERE B.year={details.val})"
 
-      # Index defect when we don't pass a year at all lol.
-      except ValueError, IndexDefect:
-        echo "Invalid year to print, defaulting to all years."
-
-      if year > 0:
-        where_clause &= &" WHERE A.id in (SELECT B.id FROM imdb_db B WHERE B.year={year})"
-
-    if "director" in vals:
-      try:
-        vals = cmd.split('"')
-        let val_contains = map(vals, proc(x: string): bool = x.contains("director"))
-        director = vals[val_contains.find(true) + 1]
-
-        # Didn't find a director that you passed so tell the user.
-        if director == "": echo "Invalid director to print. Did you forget quotation marks?"
-        else:
-          let dirid = refine_choices(find_person(director), "people")[0]
-
-          if len(dirid) == 0:
-            echo "Director not found!"
-          else:
-            # For if you're printing year AND director.
-            let join = if "WHERE" in where_clause: "AND" else: "WHERE"
-            where_clause &= &" {join} A.id in (SELECT B.movie FROM directors B WHERE B.director=\"{dirid}\")"
-
-      # Will also trigger if identify person returns an empty container.
-      except IndexDefect:
-        echo "Invalid director to print, defaulting to all directors."
-        echo "You may have forgot to enclose your director in quotation marks."
+    details = extract_val(cmd, "director")
+    if details.success:
+      let join = if "WHERE" in where_clause: "AND" else: "WHERE"
+      where_clause &= &" {join} A.id in (SELECT B.movie FROM directors B WHERE B.director=\"{details.val}\")"
 
   search_string = &"SELECT A.* FROM ranking A{where_clause} ORDER BY rank {order_by} LIMIT ?"
   rows = db.getAllRows(sql(search_string), num)
