@@ -32,20 +32,21 @@ proc person_row_to_string*(person: Row): string =
 proc pretty_print_movie*(movie: Row): string =
   result = &"{movie[1]} ({movie[2]})\n"
 
-  # Getting the director from the relation table
-  let director = db.getAllRows(sql"SELECT director FROM directors WHERE movie=?", movie[0])
-  var dir_name = ""
+  for c in @["Director", "Writer"]:
+    # Getting the director from the relation table
+    let crew = db.getAllRows(sql(&"SELECT {c.toLowerAscii} FROM {c.toLowerAscii}s WHERE movie=?"), movie[0])
+    var name = ""
 
-  if director.len > 1:
-    for i, d in director:
-      dir_name &= db.getRow(sql"SELECT name FROM people WHERE id=?", d)[0]
+    if crew.len > 1:
+      for i, n in crew:
+        name &= db.getRow(sql"SELECT name FROM people WHERE id=?", n)[0]
 
-      if i < (director.len - 1):
-        dir_name &= ", "
-  else:
-    dir_name = db.getRow(sql"SELECT name FROM people WHERE id=?", director[0])[0]
+        if i < (crew.len - 1):
+          name &= ", "
+    else:
+      name = db.getRow(sql"SELECT name FROM people WHERE id=?", crew[0])[0]
 
-  result &= &"Director: {dir_name}\n"
+    result &= &"{c}: {name}\n"
 
 
 proc initialize_people*(name: string = "name.basics.tsv") =
@@ -261,6 +262,14 @@ proc find_movie_db*(name: string, params: seq[string]): seq[Row] =
   if "director" in params:
     let director = params[params.find("director") + 1]
     search_string &= "AND A.id in (SELECT B.movie FROM directors B WHERE B.director=?)"
+
+    prep.finalize() # Finalize the random other prepared statement.
+    prep = db.prepare(search_string)
+    prep.bindParam(2, director)
+
+  if "writer" in params:
+    let director = params[params.find("writer") + 1]
+    search_string &= "AND A.id in (SELECT B.movie FROM writers B WHERE B.writer=?)"
 
     prep.finalize() # Finalize the random other prepared statement.
     prep = db.prepare(search_string)

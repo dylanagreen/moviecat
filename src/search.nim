@@ -33,13 +33,34 @@ proc extract_val*(cmd: string, extract: string): tuple[success: bool, val: strin
       # Didn't find a director that you passed so tell the user.
       if director == "": echo "Invalid director. Did you forget quotation marks?"
       else:
-        let dirid = refine_choices(find_person(director), "people")[0]
+        let id = refine_choices(find_person(director), "people")[0]
 
-        if len(dirid) == 0:
+        if len(id) == 0:
           echo "Director not found!"
         else:
-          result = (true, dirid)
+          result = (true, id)
 
           # Will also trigger if identify person returns an empty container.
     except IndexDefect:
       echo "Invalid director. Did you forget quotation marks?"
+
+  if extract == "writer" and "writer" in vals:
+    var writer = ""
+    try:
+      vals = cmd.split('"')
+      let val_contains = map(vals, proc(x: string): bool = x.contains("writer"))
+      writer = vals[val_contains.find(true) + 1]
+
+      # Didn't find a director that you passed so tell the user.
+      if writer == "": echo "Invalid writer. Did you forget quotation marks?"
+      else:
+        let id = refine_choices(find_person(writer), "people")[0]
+
+        if len(id) == 0:
+          echo "Writer not found!"
+        else:
+          result = (true, id)
+
+          # Will also trigger if identify person returns an empty container.
+    except IndexDefect:
+      echo "Invalid writer. Did you forget quotation marks?"

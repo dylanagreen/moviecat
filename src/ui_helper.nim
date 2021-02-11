@@ -35,7 +35,7 @@ proc receive_command*(): string =
 
 
 proc refine_choices*(values: seq[Row], dtype: string): Row =
-  # Need to use the write print proc depending on what's in the rows.
+  # Need to use the right print proc depending on what's in the rows.
   var print_proc: row_to_string
   if dtype == "people":
     print_proc = person_row_to_string
@@ -66,6 +66,9 @@ proc refine_choices*(values: seq[Row], dtype: string): Row =
         i = receive_command()
         discard i.decrypt_answer() # In case you pass "quit" and we need to quit.
         i.is_cancel()
+
+  if dtype != "people":
+    print_proc = pretty_print_movie
 
   echo &"You have selected:"
   echo print_proc(result)

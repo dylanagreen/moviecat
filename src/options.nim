@@ -8,10 +8,10 @@ import ui_helper
 
 # Option related enum and set/seq
 type SearchOptions* = enum
-  BYYEAR, BYDIRECTOR
+  BYYEAR, BYDIRECTOR, BYWRITER
 
 var active_options*: set[SearchOptions]
-let option_names*: array[2, string] = ["year", "director"]
+let option_names*: array[3, string] = ["year", "director", "writer"]
 
 proc save_options*() =
   # Save the options to a file

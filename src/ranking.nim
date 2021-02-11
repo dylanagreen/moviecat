@@ -64,6 +64,11 @@ proc print_rankings*(cmd: string) =
       let join = if "WHERE" in where_clause: "AND" else: "WHERE"
       where_clause &= &" {join} A.id in (SELECT B.movie FROM directors B WHERE B.director=\"{details.val}\")"
 
+    details = extract_val(cmd, "writer")
+    if details.success:
+      let join = if "WHERE" in where_clause: "AND" else: "WHERE"
+      where_clause &= &" {join} A.id in (SELECT B.movie FROM writers B WHERE B.writer=\"{details.val}\")"
+
   search_string = &"SELECT A.* FROM ranking A{where_clause} ORDER BY rank {order_by} LIMIT ?"
   rows = db.getAllRows(sql(search_string), num)
   for i in 0..<rows.len:

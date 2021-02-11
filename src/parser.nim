@@ -23,9 +23,10 @@ proc refine_search(): seq[string] =
     return
 
   echo "Refine search options:"
-
+  var good_options: seq[string]
   for opt in active_options:
     echo &"{option_names[ord(opt)]}"
+    good_options.add(option_names[ord(opt)])
 
   echo "Input \"N\" to skip."
 
@@ -36,15 +37,11 @@ proc refine_search(): seq[string] =
     return
 
   # Try and extract each val here.
-  var details = extract_val(cmd, "year")
-  if details.success:
-    result.add("year")
-    result.add(details.val)
-
-  details = extract_val(cmd, "director")
-  if details.success:
-    result.add("director")
-    result.add(details.val)
+  for opt in good_options:
+    var details = extract_val(cmd, opt)
+    if details.success:
+      result.add(opt)
+      result.add(details.val)
 
 proc find_movie(cmd: string): Row =
   var movies: seq[Row]
