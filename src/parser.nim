@@ -1,5 +1,4 @@
 import db_sqlite
-import sequtils
 import strformat
 import strutils
 
@@ -10,7 +9,7 @@ import search
 import ui_helper
 
 let
-  version = "moviecat v0.1.1 - Calico"
+  version = "moviecat v0.2.0 - Bengal"
   author = "by Dylan Green"
 
 proc about() =
