@@ -6,6 +6,7 @@ import imdb
 import options
 import ranking
 import search
+import stats
 import ui_helper
 
 let
@@ -76,5 +77,7 @@ proc decrypt_command*(cmd: string) =
     set_options()
   elif cmd.toLower() == "about":
     about()
+  elif cmd.toLower() == "stats":
+    get_stats()
   else:
     echo "Unrecognized command"
