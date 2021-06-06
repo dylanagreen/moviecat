@@ -162,6 +162,10 @@ proc get_movie_rank*(lower_bound, upper_bound: int, movie: string, comparison: c
       upper = mid - 1
 
 
+proc get_rank*(movie: Row): Row =
+   result = db.getRow(sql"SELECT * FROM ranking WHERE id=?", movie[0])
+
+
 proc rank_movie*(val: Row) =
   var
     ans: bool
@@ -173,7 +177,7 @@ proc rank_movie*(val: Row) =
     # Check to see if we've ranked the movie already by pulling it out of the
     # ranking table. This will return an empty string if we have not
     # rank the movie yet.
-    found = db.getRow(sql"SELECT * FROM ranking WHERE id=?", val[0])
+    found = get_rank(val)
 
   # We must check for found before finding indices since if we overwrite we will
   # delete the movie and move everything ranked higher down, reducing the length
