@@ -11,7 +11,7 @@ proc oldest_newest*(): Table[string, Row] =
 
   for s in @["Oldest", "Newest"]:
     # Op for operation
-    var op = if s == "Oldest": "MAX" else: "MIN"
+    var op = if s == "Newest": "MAX" else: "MIN"
     let year = db.getValue(sql(&"SELECT {op}(year) FROM imdb_db A WHERE {match_clause}"))
 
     # This is going to return the first row that complies, and I only store movies
