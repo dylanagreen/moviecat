@@ -22,6 +22,19 @@ proc get_oldest_newest*(): Table[string, Row] =
     result[s] = movie
 
 
+proc get_best_worst*(): Table[string, Row] =
+  for s in @["Worst", "Best"]:
+    var op = if s == "Best": "MAX" else: "MIN"
+
+    # Select the id of the movie that has either the max or min ranking value.
+    # Remember that this table is stored in reverse, so the minimum (0) is actually
+    # the worst ranked movie.
+    let id = db.getValue(sql(&"SELECT id from ranking A WHERE A.rank = (SELECT {op}(rank) FROM ranking)"))
+
+    let movie = db.getRow(sql(&"SELECT * FROM imdb_db A WHERE A.id = ? "), id)
+
+    result[s] = movie
+
 proc get_stats*() =
   let num_ranked = db.getValue(sql"SELECT COUNT(ALL) from ranking").parseInt()
 
@@ -34,4 +47,12 @@ proc get_stats*() =
     # Don't forget that rank is increasing (higher = better) but the usual
     # expected result is the opposite (lower = better)
     echo &"{k} Movie: [{num_ranked - rank + 1}] {movie_row_to_string(v)}"
+
+  let bestworst = get_best_worst()
+
+  for k, v in bestworst:
+    let rank = get_rank(v)[1].parseInt()
+    # Don't forget that rank is increasing (higher = better) but the usual
+    # expected result is the opposite (lower = better)
+    echo &"{k} Ranked Movie: [{num_ranked - rank + 1}] {movie_row_to_string(v)}"
 
