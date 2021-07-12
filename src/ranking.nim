@@ -179,18 +179,23 @@ proc rank_movie*(val: Row) =
     # rank the movie yet.
     found = get_rank(val)
 
+    # Need this to display ranks correctly
+    num_ranked = db.getValue(sql"SELECT COUNT(ALL) from ranking")
+
   # We must check for found before finding indices since if we overwrite we will
   # delete the movie and move everything ranked higher down, reducing the length
   # by one as well. We must check for this, because id serves as a unique key
   # in the sql database and trying to rank a movie that is already ranked
   # without removing it will cause an exception due to an id clash.
   if found[0] != "":
-    echo &"You have already ranked {new_movie} at rank {found[1]}"
+    let cur_rank = parseInt(found[1]) - 1
+
+    echo &"You have already ranked {new_movie} at rank {parseInt(num_ranked) - cur_rank}"
     echo "Would you like to rerank this movie? Note: You will overwrite the old ranking."
     cmd = receive_command()
     ans = decrypt_answer(cmd)
 
-    # If we're overwriting we must delete the old movie and move all ranings down.
+    # If we're overwriting we must delete the old movie and move all ratings down.
     if ans:
       delete_movie(val[0])
     else:
@@ -199,7 +204,6 @@ proc rank_movie*(val: Row) =
 
   var
     lower = 0
-    num_ranked = db.getValue(sql"SELECT COUNT(ALL) from ranking")
 
     # The indices on the lower and upper bounds for the insertion sort.
     upper = if num_ranked[0].isDigit(): parseInt(num_ranked) - 1 else: 0
