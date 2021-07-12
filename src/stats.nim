@@ -6,7 +6,7 @@ import tables
 import imdb
 import ranking
 
-proc oldest_newest*(): Table[string, Row] =
+proc get_oldest_newest*(): Table[string, Row] =
   let match_clause = "A.id IN (SELECT id FROM ranking)"
 
   for s in @["Oldest", "Newest"]:
@@ -27,7 +27,7 @@ proc get_stats*() =
 
   echo &"Number of Movies Ranked: {num_ranked}"
 
-  let oldnew = oldest_newest()
+  let oldnew = get_oldest_newest()
 
   for k, v in oldnew:
     let rank = get_rank(v)[1].parseInt()
