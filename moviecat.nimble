@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.2.0"
+version       = "0.3.0dev"
 author        = "Dylan Green"
 description   = "Intelligent lightweight movie ranking program."
 license       = "GPL-3.0"
