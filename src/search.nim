@@ -61,6 +61,6 @@ proc extract_val*(cmd: string, extract: string): tuple[success: bool, val: strin
         else:
           result = (true, id)
 
-          # Will also trigger if identify person returns an empty container.
+    # Will also trigger if identify person returns an empty container.
     except IndexDefect:
       echo "Invalid writer. Did you forget quotation marks?"
