@@ -40,19 +40,12 @@ proc get_stats*() =
 
   echo &"Number of Movies Ranked: {num_ranked}"
 
-  let oldnew = get_oldest_newest()
+  proc print_stats_table(t: Table[string, Row]) =
+    for k, v in t:
+      let rank = get_rank(v)[1].parseInt()
+      # Don't forget that rank is increasing (higher = better) but the usual
+      # expected result is the opposite (lower = better)
+      echo &"{k} Ranked Movie: [{num_ranked - rank + 1}] {movie_row_to_string(v)}"
 
-  for k, v in oldnew:
-    let rank = get_rank(v)[1].parseInt()
-    # Don't forget that rank is increasing (higher = better) but the usual
-    # expected result is the opposite (lower = better)
-    echo &"{k} Movie: [{num_ranked - rank + 1}] {movie_row_to_string(v)}"
-
-  let bestworst = get_best_worst()
-
-  for k, v in bestworst:
-    let rank = get_rank(v)[1].parseInt()
-    # Don't forget that rank is increasing (higher = better) but the usual
-    # expected result is the opposite (lower = better)
-    echo &"{k} Ranked Movie: [{num_ranked - rank + 1}] {movie_row_to_string(v)}"
-
+  print_stats_table(get_oldest_newest())
+  print_stats_table(get_best_worst())
