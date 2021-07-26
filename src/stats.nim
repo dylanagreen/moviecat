@@ -1,4 +1,7 @@
+import algorithm
 import db_sqlite
+import math
+import sequtils
 import strformat
 import strutils
 import tables
@@ -35,6 +38,55 @@ proc get_best_worst*(): Table[string, Row] =
 
     result[s] = movie
 
+
+# Returns 10 movies, one "representative" of that score out of ten.
+# For this proc we assume that a score between 5-6/10 is average
+# So 5 and 6 are each half a st.dev from the mean, 7 and 4 are 1 std dev
+# 8 and 3 are 1.5 st dev, 9 and 2 are 2 st.devs from the mean, and
+# 10 or 1 is the remainder (>2 st.dev)
+proc get_representative(): seq[tuple[score: int, movie: Row]] =
+  let
+    num_ranked = db.getValue(sql"SELECT COUNT(ALL) from ranking").parseInt()
+    half_movies = num_ranked div 2
+
+    # How many movies should be contained within:
+    # 1/2 sigma: half
+    # 1 sigma: first
+    # 3/2 sigma: three_halves
+    # 2 sigma: second
+    half = int(floor(float(num_ranked) * 0.3829))
+    first = int(floor(float(num_ranked) * 0.6827))
+    three_halves = int(floor(float(num_ranked) * 0.86638))
+    second = int(floor(float(num_ranked) * 0.9545))
+
+  var
+    scores = @[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    intervals = @[num_ranked, second, three_halves, first, half]
+
+    # Lower bounds for regions below 6/10
+    lower_bounds = intervals.map(proc(x: int): int = half_movies - x div 2)
+    # Reverse lower is used to find lower bounds > rank 5
+    reverse_lower = lower_bounds.reversed()
+
+  # Subtracting the reversed from the max gives us new lower bounds
+  reverse_lower = reverse_lower.map(proc(x: int): int = num_ranked - x)
+  lower_bounds = concat(lower_bounds, reverse_lower)
+
+  # Insert this at the midpoint to ensure evyerthing is computed correctly
+  # as this is the lower bound of the 6/10 ranking and upper of 5/10
+  lower_bounds.insert(half_movies, 5)
+
+  # Loop over the out of 10 scores for ordering purposes and then
+  # find the midpoint of each range. The midpoint of the range is the
+  # "representative movie" for that score out of ten.
+  for i, v in scores:
+    var val = (lower_bounds[i + 1] - lower_bounds[i]) div 2 + lower_bounds[i]
+    let id = db.getValue(sql(&"SELECT id from ranking A WHERE A.rank = ?"), val)
+    let movie = db.getRow(sql(&"SELECT * FROM imdb_db A WHERE A.id = ? "), id)
+    result.add((v, movie))
+
+
+
 proc get_stats*() =
   let num_ranked = db.getValue(sql"SELECT COUNT(ALL) from ranking").parseInt()
 
@@ -49,3 +101,12 @@ proc get_stats*() =
 
   print_stats_table(get_oldest_newest())
   print_stats_table(get_best_worst())
+
+  # representative score/10 movies.
+  echo "\nRepresentative Movies"
+  var reps = get_representative()
+  for val in reps:
+    let rank = get_rank(val.movie)[1].parseInt()
+    # Don't forget that rank is increasing (higher = better) but the usual
+    # expected result is the opposite (lower = better)
+    echo &"{val.score}/10: [{num_ranked - rank + 1}] {movie_row_to_string(val.movie)}"
