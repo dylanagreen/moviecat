@@ -32,9 +32,9 @@ proc get_best_worst*(): Table[string, Row] =
     # Select the id of the movie that has either the max or min ranking value.
     # Remember that this table is stored in reverse, so the minimum (0) is actually
     # the worst ranked movie.
-    let id = db.getValue(sql(&"SELECT id from ranking A WHERE A.rank = (SELECT {op}(rank) FROM ranking)"))
-
-    let movie = db.getRow(sql(&"SELECT * FROM imdb_db A WHERE A.id = ? "), id)
+    let movie = db.getRow(sql(&"""SELECT * FROM imdb_db A WHERE A.id =
+                               (SELECT id from ranking B WHERE B.rank =
+                               (SELECT {op}(rank) FROM ranking))"""))
 
     result[s] = movie
 
@@ -81,10 +81,10 @@ proc get_representative(): seq[tuple[score: int, movie: Row]] =
   # "representative movie" for that score out of ten.
   for i, v in scores:
     var val = (lower_bounds[i + 1] - lower_bounds[i]) div 2 + lower_bounds[i]
-    let id = db.getValue(sql(&"SELECT id from ranking A WHERE A.rank = ?"), val)
-    let movie = db.getRow(sql(&"SELECT * FROM imdb_db A WHERE A.id = ? "), id)
-    result.add((v, movie))
+    let movie = db.getRow(sql"""SELECT * FROM imdb_db A WHERE A.id =
+                          (SELECT id from ranking B WHERE B.rank = ?)""", val)
 
+    result.add((v, movie))
 
 
 proc get_stats*() =
