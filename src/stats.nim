@@ -54,14 +54,16 @@ proc get_representative(): seq[tuple[score: int, movie: Row]] =
     # 1 sigma: first
     # 3/2 sigma: three_halves
     # 2 sigma: second
+    # 5/2 sigma: five_halves
     half = int(floor(float(num_ranked) * 0.3829))
     first = int(floor(float(num_ranked) * 0.6827))
     three_halves = int(floor(float(num_ranked) * 0.86638))
     second = int(floor(float(num_ranked) * 0.9545))
+    five_halves = int(floor(float(num_ranked) * 0.98758))
 
   var
-    scores = @[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    intervals = @[num_ranked, second, three_halves, first, half]
+    scores = @[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    intervals = @[num_ranked, five_halves, second, three_halves, first, half]
 
     # Lower bounds for regions below 6/10
     lower_bounds = intervals.map(proc(x: int): int = half_movies - x div 2)
@@ -74,7 +76,7 @@ proc get_representative(): seq[tuple[score: int, movie: Row]] =
 
   # Insert this at the midpoint to ensure evyerthing is computed correctly
   # as this is the lower bound of the 6/10 ranking and upper of 5/10
-  lower_bounds.insert(half_movies, 5)
+  # lower_bounds.insert(half_movies, 5)
 
   # Loop over the out of 10 scores for ordering purposes and then
   # find the midpoint of each range. The midpoint of the range is the
