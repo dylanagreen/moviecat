@@ -9,6 +9,36 @@ import tables
 import imdb
 import ranking
 
+proc get_score_bounds(): seq[int] =
+  let
+    num_ranked = db.getValue(sql"SELECT COUNT(ALL) from ranking").parseInt()
+    half_movies = num_ranked div 2
+
+    # How many movies should be contained within:
+    # 1/2 sigma: half
+    # 1 sigma: first
+    # 3/2 sigma: three_halves
+    # 2 sigma: second
+    # 5/2 sigma: five_halves
+    half = int(floor(float(num_ranked) * 0.3829))
+    first = int(floor(float(num_ranked) * 0.6827))
+    three_halves = int(floor(float(num_ranked) * 0.86638))
+    second = int(floor(float(num_ranked) * 0.9545))
+    five_halves = int(floor(float(num_ranked) * 0.98758))
+
+    intervals = @[num_ranked, five_halves, second, three_halves, first, half]
+
+    # Lower bounds for regions below 6/10
+    lower_bounds = intervals.map(proc(x: int): int = half_movies - x div 2)
+
+  # Reverse lower is used to find lower bounds > rank 5
+  var reverse_lower = lower_bounds.reversed()
+
+  # Subtracting the reversed from the max gives us new lower bounds
+  reverse_lower = reverse_lower.map(proc(x: int): int = num_ranked - x)
+  result = concat(lower_bounds, reverse_lower)
+
+
 proc get_oldest_newest*(): Table[string, Row] =
   let match_clause = "A.id IN (SELECT id FROM ranking)"
 
@@ -46,35 +76,10 @@ proc get_best_worst*(): Table[string, Row] =
 # 10 or 1 is the remainder (>2 st.dev)
 proc get_representative(): seq[tuple[score: int, movie: Row]] =
   let
-    num_ranked = db.getValue(sql"SELECT COUNT(ALL) from ranking").parseInt()
-    half_movies = num_ranked div 2
-
-    # How many movies should be contained within:
-    # 1/2 sigma: half
-    # 1 sigma: first
-    # 3/2 sigma: three_halves
-    # 2 sigma: second
-    # 5/2 sigma: five_halves
-    half = int(floor(float(num_ranked) * 0.3829))
-    first = int(floor(float(num_ranked) * 0.6827))
-    three_halves = int(floor(float(num_ranked) * 0.86638))
-    second = int(floor(float(num_ranked) * 0.9545))
-    five_halves = int(floor(float(num_ranked) * 0.98758))
-
-  var
     scores = @[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    intervals = @[num_ranked, five_halves, second, three_halves, first, half]
+    lower_bounds = get_score_bounds()
 
-    # Lower bounds for regions below 6/10
-    lower_bounds = intervals.map(proc(x: int): int = half_movies - x div 2)
-    # Reverse lower is used to find lower bounds > rank 5
-    reverse_lower = lower_bounds.reversed()
-
-  # Subtracting the reversed from the max gives us new lower bounds
-  reverse_lower = reverse_lower.map(proc(x: int): int = num_ranked - x)
-  lower_bounds = concat(lower_bounds, reverse_lower)
-
-  # Insert this at the midpoint to ensure evyerthing is computed correctly
+  # Insert this at the midpoint to ensure everything is computed correctly
   # as this is the lower bound of the 6/10 ranking and upper of 5/10
   # lower_bounds.insert(half_movies, 5)
 
@@ -89,7 +94,7 @@ proc get_representative(): seq[tuple[score: int, movie: Row]] =
     result.add((v, movie))
 
 
-proc get_stats*() =
+proc get_all_stats*() =
   let num_ranked = db.getValue(sql"SELECT COUNT(ALL) from ranking").parseInt()
 
   echo &"Number of Movies Ranked: {num_ranked}"
@@ -112,3 +117,31 @@ proc get_stats*() =
     # Don't forget that rank is increasing (higher = better) but the usual
     # expected result is the opposite (lower = better)
     echo &"{val.score}/10: [{num_ranked - rank + 1}] {movie_row_to_string(val.movie)}"
+
+proc get_stats*(cmd: string) =
+  if cmd.toLower() == "stats":
+    get_all_stats()
+  else:
+    let num_ranked = db.getValue(sql"SELECT COUNT(ALL) from ranking").parseInt()
+    if "movie" in cmd:
+      let
+        vals = cmd.split(' ')
+        ind = vals.find("movie") + 1
+        movie_name = vals[ind..^1].join(" ")
+
+        found_movie = find_movie_ranking_db(movie_name)[0]
+        # TODO refine search if you've ranked multiple movies with the same name
+        rank = get_rank(found_movie)
+
+        # Finds the first score interval this fits into and considers that
+        # as it's "representative" score, i.e. the score out of 10.
+        # Due to <= scores are assigned to the higher interval if they fall
+        # right on the boundary.
+        lower_bounds = get_score_bounds()
+        lower_than_rank = lower_bounds.map(proc(x: int): int = int(x <= rank[1].parseInt()))
+
+
+      echo &"Stats for {movie_row_to_string(found_movie)}:"
+      echo &"Rank: {num_ranked - rank[1].parseInt() + 1}"
+      echo &"Watched on: {rank[2]}"
+      echo &"Representative Score: {lower_than_rank.find(0)}/10"

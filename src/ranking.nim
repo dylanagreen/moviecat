@@ -232,3 +232,21 @@ proc clear_rankings*() =
   let cmd = receive_command()
   if decrypt_answer(cmd):
     db.exec(sql"DELETE FROM ranking")
+
+# Finds a movie in the ranking db rather than in the imdb database.
+proc find_movie_ranking_db*(name: string): seq[Row] =
+  # Need to insert the magic % wildcards before and after to search for names
+  # that include the search string
+  var search_name = name.replace("_", "\\_") # For searching for apostrophes
+  search_name = search_name.replace("%", "\\%")
+
+  var
+    search_string = "SELECT * FROM imdb_db A WHERE A.name LIKE ? AND A.id in (SELECT B.id FROM ranking B)"
+    prep = db.prepare(search_string)
+
+  prep.bindParam(1, &"%{search_name}%")
+  result = db.getAllRows(prep)
+
+  # If you don't do this the db will explode when you try do anything.
+  prep.finalize()
+
