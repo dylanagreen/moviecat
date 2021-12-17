@@ -129,19 +129,26 @@ proc get_stats*(cmd: string) =
         ind = vals.find("movie") + 1
         movie_name = vals[ind..^1].join(" ")
 
-        found_movie = find_movie_ranking_db(movie_name)[0]
-        # TODO refine search if you've ranked multiple movies with the same name
-        rank = get_rank(found_movie)
+        found = find_movie_ranking_db(movie_name)
 
-        # Finds the first score interval this fits into and considers that
-        # as it's "representative" score, i.e. the score out of 10.
-        # Due to <= scores are assigned to the higher interval if they fall
-        # right on the boundary.
-        lower_bounds = get_score_bounds()
-        lower_than_rank = lower_bounds.map(proc(x: int): int = int(x <= rank[1].parseInt()))
+      # TODO refine search if you've ranked multiple movies with the same name
+      if found.len() == 0:
+        echo &"No movie ranked with name: {movie_name}"
+      else:
+        let
+          found_movie = found[0]
+
+          rank = get_rank(found_movie)
+
+          # Finds the first score interval this fits into and considers that
+          # as it's "representative" score, i.e. the score out of 10.
+          # Due to <= scores are assigned to the higher interval if they fall
+          # right on the boundary.
+          lower_bounds = get_score_bounds()
+          lower_than_rank = lower_bounds.map(proc(x: int): int = int(x <= rank[1].parseInt()))
 
 
-      echo &"Stats for {movie_row_to_string(found_movie)}:"
-      echo &"Rank: {num_ranked - rank[1].parseInt() + 1}"
-      echo &"Watched on: {rank[2]}"
-      echo &"Representative Score: {lower_than_rank.find(0)}/10"
+        echo &"Stats for {movie_row_to_string(found_movie)}:"
+        echo &"Rank: {num_ranked - rank[1].parseInt() + 1}"
+        echo &"Watched on: {rank[2]}"
+        echo &"Representative Score: {lower_than_rank.find(0)}/10"
