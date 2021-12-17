@@ -153,38 +153,47 @@ proc get_stats*(cmd: string) =
         vals = cmd.split(' ')
         ind = vals.find("year") + 1
 
-        found_movies = get_ranked_movies_by_year(vals[ind])
+      if vals[ind] == "all":
+          echo "Number of Movies Ranked Per Year:"
 
-        # Need this to find the representitive scores
-        lower_bounds = get_score_bounds()
-
-      echo &"Stats for {vals[ind]}:"
-      echo &"Number of Movies Watched: {found_movies.len}"
-
-      # Here we will compute the average representitive score by computing
-      # each movie's representitive score:
-      var reps: seq[int] = @[]
-
-      for i in 0..<found_movies.len:
+          # SQL query that counts how many movies were ranked per year.
+          let year_count = db.getAllRows(sql"""SELECT year, COUNT(*) FROM imdb_db A WHERE A.id in (SELECT B.id FROM ranking B) GROUP BY year""")
+          for i in 0..<year_count.len:
+            echo &"{year_count[i][0]}: {year_count[i][1]}"
+      else:
         let
-          temp = found_movies[i]
-          lower_than_rank = lower_bounds.map(proc(x: int): int = int(x <= temp[^2].parseInt()))
-        reps.add(lower_than_rank.find(0))
+          found_movies = get_ranked_movies_by_year(vals[ind])
 
-      echo &"Highest Ranked: {movie_row_to_string(found_movies[0])} ({reps[0]}/10)"
-      echo &"Lowest Ranked: {movie_row_to_string(found_movies[^1])} ({reps[^1]}/10)"
+          # Need this to find the representitive scores
+          lower_bounds = get_score_bounds()
 
-      echo &"Average Representitive Score: {round(reps.sum() / reps.len, 2)/10}"
-      # If you ranked less than 10 movies from that year, only display
-      # amount of movies you ranked.
-      let term = if found_movies.len < 10: found_movies.len else: 10
-      echo &"Top {term}:"
-      for i in 0..<term:
-        let
-          temp = found_movies[i]
-          overall_rank = get_overall_rank(temp[^2].parseInt())
+        echo &"Stats for {vals[ind]}:"
+        echo &"Number of Movies Watched: {found_movies.len}"
 
-        var str = movie_row_to_string(temp)
-        str &= &" ({reps[i]}/10)"
-        # str &= &" (Watched on {temp[^1]})"
-        echo &"[{overall_rank}] {str}"
+        # Here we will compute the average representitive score by computing
+        # each movie's representitive score:
+        var reps: seq[int] = @[]
+
+        for i in 0..<found_movies.len:
+          let
+            temp = found_movies[i]
+            lower_than_rank = lower_bounds.map(proc(x: int): int = int(x <= temp[^2].parseInt()))
+          reps.add(lower_than_rank.find(0))
+
+        echo &"Highest Ranked: {movie_row_to_string(found_movies[0])} ({reps[0]}/10)"
+        echo &"Lowest Ranked: {movie_row_to_string(found_movies[^1])} ({reps[^1]}/10)"
+
+        echo &"Average Representitive Score: {round(reps.sum() / reps.len, 2)/10}"
+        # If you ranked less than 10 movies from that year, only display
+        # amount of movies you ranked.
+        let term = if found_movies.len < 10: found_movies.len else: 10
+        echo &"Top {term}:"
+        for i in 0..<term:
+          let
+            temp = found_movies[i]
+            overall_rank = get_overall_rank(temp[^2].parseInt())
+
+          var str = movie_row_to_string(temp)
+          str &= &" ({reps[i]}/10)"
+          # str &= &" (Watched on {temp[^1]})"
+          echo &"[{overall_rank}] {str}"
