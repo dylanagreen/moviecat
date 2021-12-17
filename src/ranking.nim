@@ -20,6 +20,11 @@ proc ranking_to_string(ranking: Row, watched=false): string =
   if not ranking[^1].isEmptyOrWhitespace and watched:
     result = result & &" (Watched on {ranking[^1]})"
 
+proc get_overall_rank*(db_rank: int): int =
+  # Don't forget that rank is increasing (higher = better) but the usual
+  # expected result is the opposite (lower = better)
+  let num_ranked = db.getValue(sql"SELECT COUNT(ALL) from ranking").parseInt()
+  result = num_ranked - db_rank + 1
 
 proc print_rankings*(cmd: string) =
   var
@@ -245,6 +250,19 @@ proc get_movie_ranking_db*(name: string): seq[Row] =
     prep = db.prepare(search_string)
 
   prep.bindParam(1, &"%{search_name}%")
+  result = db.getAllRows(prep)
+
+  # If you don't do this the db will explode when you try do anything.
+  prep.finalize()
+
+# Gets all movies ranked in a given year.
+proc get_ranked_movies_by_year*(year: string): seq[Row] =
+  var
+  #   search_string = "SELECT * FROM imdb_db A WHERE A.year LIKE ? AND A.id in (SELECT B.id FROM ranking B)"
+    search_string = "SELECT * FROM imdb_db INNER JOIN ranking ON imdb_db.id = ranking.id WHERE imdb_db.year LIKE ? ORDER BY ranking.rank DESC"
+    prep = db.prepare(search_string)
+
+  prep.bindParam(1, year)
   result = db.getAllRows(prep)
 
   # If you don't do this the db will explode when you try do anything.
