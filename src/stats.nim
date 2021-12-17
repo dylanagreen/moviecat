@@ -183,7 +183,7 @@ proc get_stats*(cmd: string) =
         echo &"Highest Ranked: {movie_row_to_string(found_movies[0])} ({reps[0]}/10)"
         echo &"Lowest Ranked: {movie_row_to_string(found_movies[^1])} ({reps[^1]}/10)"
 
-        echo &"Average Representitive Score: {round(reps.sum() / reps.len, 2)/10}"
+        echo &"Average Representative Score: {round(reps.sum() / reps.len, 2)}/10"
         # If you ranked less than 10 movies from that year, only display
         # amount of movies you ranked.
         let term = if found_movies.len < 10: found_movies.len else: 10
