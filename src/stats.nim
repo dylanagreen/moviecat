@@ -129,7 +129,7 @@ proc get_stats*(cmd: string) =
         ind = vals.find("movie") + 1
         movie_name = vals[ind..^1].join(" ")
 
-        found = find_movie_ranking_db(movie_name)
+        found = get_movie_ranking_db(movie_name)
 
       # TODO refine search if you've ranked multiple movies with the same name
       if found.len() == 0:

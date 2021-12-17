@@ -234,7 +234,7 @@ proc clear_rankings*() =
     db.exec(sql"DELETE FROM ranking")
 
 # Finds a movie in the ranking db rather than in the imdb database.
-proc find_movie_ranking_db*(name: string): seq[Row] =
+proc get_movie_ranking_db*(name: string): seq[Row] =
   # Need to insert the magic % wildcards before and after to search for names
   # that include the search string
   var search_name = name.replace("_", "\\_") # For searching for apostrophes
