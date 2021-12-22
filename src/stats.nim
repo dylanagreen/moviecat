@@ -145,7 +145,13 @@ proc print_stats_by_keyword(keyword: string, value: string) =
     let
       temp = found_movies[i]
       lower_than_rank = lower_bounds.map(proc(x: int): int = int(x <= temp[^2].parseInt()))
-    reps.add(lower_than_rank.find(0))
+
+    # The representative will only be -1 if every single value is a 1
+    # in which case the movie is in the highest score bound and is therefore
+    # a 10/10, not a -1/10 lol.
+    var representative = lower_than_rank.find(0)
+    representative = if representative >= 0: representative else: 10
+    reps.add(representative)
 
   echo &"Highest Ranked: {movie_row_to_string(found_movies[0])} ({reps[0]}/10)"
   echo &"Lowest Ranked: {movie_row_to_string(found_movies[^1])} ({reps[^1]}/10)"
@@ -206,11 +212,15 @@ proc get_stats*(cmd: string) =
           lower_bounds = get_score_bounds()
           lower_than_rank = lower_bounds.map(proc(x: int): int = int(x <= rank[1].parseInt()))
 
-
+        # The representative will only be -1 if every single value is a 1
+        # in which case the movie is in the highest score bound and is therefore
+        # a 10/10, not a -1/10 lol.
+        var representative = lower_than_rank.find(0)
+        representative = if representative >= 0: representative else: 10
         echo &"Stats for {movie_row_to_string(found_movie)}:"
         echo &"Rank: {get_overall_rank(rank[1].parseInt())}"
         echo &"Watched on: {rank[2]}"
-        echo &"Representative Score: {lower_than_rank.find(0)}/10"
+        echo &"Representative Score: {representative}/10"
 
     of 1: # year
       if vals[ind] == "all":
