@@ -66,6 +66,7 @@ proc print_rankings*(cmd: string) =
 
     details = extract_val(cmd, "director")
     if details.success:
+      # I.e. "If we already have a WHERE clause, then this must become an AND"
       let join = if "WHERE" in where_clause: "AND" else: "WHERE"
       where_clause &= &" {join} A.id in (SELECT B.movie FROM directors B WHERE B.director=\"{details.val}\")"
 
@@ -258,11 +259,23 @@ proc get_movie_ranking_db*(name: string): seq[Row] =
 # Gets all movies ranked in a given year.
 proc get_ranked_movies_by_year*(year: string): seq[Row] =
   var
-  #   search_string = "SELECT * FROM imdb_db A WHERE A.year LIKE ? AND A.id in (SELECT B.id FROM ranking B)"
+    # Using an inner join to make sure that the returned combined movie results
+    # are in ranking order
     search_string = "SELECT * FROM imdb_db INNER JOIN ranking ON imdb_db.id = ranking.id WHERE imdb_db.year LIKE ? ORDER BY ranking.rank DESC"
     prep = db.prepare(search_string)
 
   prep.bindParam(1, year)
+  result = db.getAllRows(prep)
+
+  # If you don't do this the db will explode when you try do anything.
+  prep.finalize()
+
+proc get_ranked_movies_by_person*(person: string, role: string = "director"): seq[Row] =
+  var
+    search_string = &"SELECT * FROM imdb_db A INNER JOIN ranking B ON A.id = B.id WHERE A.id IN (SELECT C.movie FROM {role}s C WHERE C.{role}=?) ORDER BY B.rank DESC"
+    prep = db.prepare(search_string)
+
+  prep.bindParam(1, person)
   result = db.getAllRows(prep)
 
   # If you don't do this the db will explode when you try do anything.

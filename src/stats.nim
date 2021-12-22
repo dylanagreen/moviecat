@@ -8,6 +8,7 @@ import tables
 
 import imdb
 import ranking
+import ui_helper
 
 proc get_score_bounds(): seq[int] =
   let
@@ -114,14 +115,77 @@ proc get_all_stats*() =
     let rank = get_rank(val.movie)[1].parseInt()
     echo &"{val.score}/10: [{get_overall_rank(rank)}] {movie_row_to_string(val.movie)}"
 
+
+proc print_stats_by_keyword(keyword: string, value: string) =
+  var
+    found_movies: seq[Row] = @[]
+
+  if keyword == "year":
+    found_movies = get_ranked_movies_by_year(value)
+    # I only print this for year because the people ones will print
+    # "You have selected" after the refining choice.
+    echo &"Stats for {value}:"
+  elif keyword == "director":
+    let id = refine_choices(find_person(value), "people")[0]
+    found_movies = get_ranked_movies_by_person(id, "director")
+  elif keyword == "writer":
+    let id = refine_choices(find_person(value), "people")[0]
+    found_movies = get_ranked_movies_by_person(id, "writer")
+
+  # Need this to find the representitive scores
+  let lower_bounds = get_score_bounds()
+
+  echo &"Number of Movies Watched: {found_movies.len}"
+
+  # Here we will compute the average representative score by computing
+  # each movie's representative score:
+  var reps: seq[int] = @[]
+
+  for i in 0..<found_movies.len:
+    let
+      temp = found_movies[i]
+      lower_than_rank = lower_bounds.map(proc(x: int): int = int(x <= temp[^2].parseInt()))
+    reps.add(lower_than_rank.find(0))
+
+  echo &"Highest Ranked: {movie_row_to_string(found_movies[0])} ({reps[0]}/10)"
+  echo &"Lowest Ranked: {movie_row_to_string(found_movies[^1])} ({reps[^1]}/10)"
+
+  echo &"Average Representative Score: {round(reps.sum() / reps.len, 2)}/10"
+  # If you ranked less than 10 movies from that year, only display
+  # amount of movies you ranked.
+  let term = if found_movies.len < 10: found_movies.len else: 10
+  echo &"Top {term}:"
+  for i in 0..<term:
+    let
+      temp = found_movies[i]
+      overall_rank = get_overall_rank(temp[^2].parseInt())
+
+    var str = movie_row_to_string(temp)
+    str &= &" ({reps[i]}/10)"
+    # str &= &" (Watched on {temp[^1]})"
+    echo &"[{overall_rank}] {str}"
+
+
 proc get_stats*(cmd: string) =
   if cmd.toLower() == "stats":
     get_all_stats()
   else:
-    if "movie" in cmd:
+    let
+      vals = cmd.split(' ')
+      keywords = @["movie", "year", "director", "writer"]
+      found_keywords = keywords.map(proc(x: string): int = int(x.toLower() in vals))
+
+    if sum(found_keywords) > 1:
+      echo "Please specify only one of the following keywords: movie, year, director, writer."
+      return
+
+    let
+      chosen = found_keywords.find(1)
+      ind = vals.find(keywords[chosen]) + 1
+
+    case chosen
+    of 0: # Movie
       let
-        vals = cmd.split(' ')
-        ind = vals.find("movie") + 1
         movie_name = vals[ind..^1].join(" ")
 
         found = get_movie_ranking_db(movie_name)
@@ -148,11 +212,7 @@ proc get_stats*(cmd: string) =
         echo &"Watched on: {rank[2]}"
         echo &"Representative Score: {lower_than_rank.find(0)}/10"
 
-    elif "year" in cmd:
-      let
-        vals = cmd.split(' ')
-        ind = vals.find("year") + 1
-
+    of 1: # year
       if vals[ind] == "all":
           echo "Number of Movies Ranked Per Year:"
 
@@ -161,39 +221,15 @@ proc get_stats*(cmd: string) =
           for i in 0..<year_count.len:
             echo &"{year_count[i][0]}: {year_count[i][1]}"
       else:
-        let
-          found_movies = get_ranked_movies_by_year(vals[ind])
+        print_stats_by_keyword("year", vals[ind])
 
-          # Need this to find the representitive scores
-          lower_bounds = get_score_bounds()
-
-        echo &"Stats for {vals[ind]}:"
-        echo &"Number of Movies Watched: {found_movies.len}"
-
-        # Here we will compute the average representitive score by computing
-        # each movie's representitive score:
-        var reps: seq[int] = @[]
-
-        for i in 0..<found_movies.len:
-          let
-            temp = found_movies[i]
-            lower_than_rank = lower_bounds.map(proc(x: int): int = int(x <= temp[^2].parseInt()))
-          reps.add(lower_than_rank.find(0))
-
-        echo &"Highest Ranked: {movie_row_to_string(found_movies[0])} ({reps[0]}/10)"
-        echo &"Lowest Ranked: {movie_row_to_string(found_movies[^1])} ({reps[^1]}/10)"
-
-        echo &"Average Representative Score: {round(reps.sum() / reps.len, 2)}/10"
-        # If you ranked less than 10 movies from that year, only display
-        # amount of movies you ranked.
-        let term = if found_movies.len < 10: found_movies.len else: 10
-        echo &"Top {term}:"
-        for i in 0..<term:
-          let
-            temp = found_movies[i]
-            overall_rank = get_overall_rank(temp[^2].parseInt())
-
-          var str = movie_row_to_string(temp)
-          str &= &" ({reps[i]}/10)"
-          # str &= &" (Watched on {temp[^1]})"
-          echo &"[{overall_rank}] {str}"
+    of 2: # director
+      let
+        director_name = vals[ind..^1].join(" ")
+      print_stats_by_keyword("director", director_name)
+    of 3: # writer
+      let
+        writer_name = vals[ind..^1].join(" ")
+      print_stats_by_keyword("writer", writer_name)
+    else:
+      echo "Please specify one of the following keywords: movie, year, director, writer."
