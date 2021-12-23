@@ -10,7 +10,8 @@ import ui_helper
 # Type for the comparison procedure that takes in a
 # string and an int and returns a bool
 type cmpProc = proc(movie: string, rank: int): bool
-
+type yearType* = enum
+  released, watched
 
 # Find the movie in the movie db that corresponds to the id in this ranking.
 proc ranking_to_string(ranking: Row, watched=false): string =
@@ -256,26 +257,14 @@ proc get_movie_ranking_db*(name: string): seq[Row] =
   # If you don't do this the db will explode when you try do anything.
   prep.finalize()
 
-# Gets all movies ranked in a given (release) year.
-proc get_ranked_movies_by_release_year*(year: string): seq[Row] =
-  var
-    # Using an inner join to make sure that the returned combined movie results
-    # are in ranking order
-    search_string = "SELECT * FROM imdb_db INNER JOIN ranking ON imdb_db.id = ranking.id WHERE imdb_db.year LIKE ? ORDER BY ranking.rank DESC"
-    prep = db.prepare(search_string)
-
-  prep.bindParam(1, year)
-  result = db.getAllRows(prep)
-
-  # If you don't do this the db will explode when you try do anything.
-  prep.finalize()
-
 # Gets all movies ranked in a given year.
-proc get_ranked_movies_by_watch_year*(year: string): seq[Row] =
+proc get_ranked_movies_by_year*(year: string, deliniation: yearType): seq[Row] =
   var
     # Using an inner join to make sure that the returned combined movie results
     # are in ranking order
-    search_string = "SELECT * FROM imdb_db INNER JOIN ranking ON imdb_db.id = ranking.id WHERE strftime('%Y', ranking.date)=? ORDER BY ranking.rank DESC"
+    clause = if deliniation == yearType.released: "imdb_db.year LIKE ?"
+             else: "strftime('%Y', ranking.date)=?"
+    search_string = &"SELECT * FROM imdb_db INNER JOIN ranking ON imdb_db.id = ranking.id WHERE {clause} ORDER BY ranking.rank DESC"
     prep = db.prepare(search_string)
 
   prep.bindParam(1, year)

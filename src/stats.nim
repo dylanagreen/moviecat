@@ -121,12 +121,12 @@ proc print_stats_by_keyword(keyword: string, value: string) =
     found_movies: seq[Row] = @[]
 
   if keyword == "year":
-    found_movies = get_ranked_movies_by_release_year(value)
+    found_movies = get_ranked_movies_by_year(value, yearType.released)
     # I only print this for year because the people ones will print
     # "You have selected" after the refining choice.
     echo &"Stats for movies released in {value}:"
   elif keyword == "watched":
-    found_movies = get_ranked_movies_by_watch_year(value)
+    found_movies = get_ranked_movies_by_year(value, yearType.watched)
     echo &"Stats for movies watched in {value}:"
   elif keyword == "director":
     let id = refine_choices(find_person(value), "people")[0]
