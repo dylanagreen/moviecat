@@ -138,6 +138,10 @@ proc print_stats_by_keyword(keyword: string, value: string) =
   # Need this to find the representitive scores
   let lower_bounds = get_score_bounds()
 
+  if found_movies.len < 1:
+    echo &"No movies watched for {value}. Go rank some!"
+    return
+
   echo &"Number of Movies Watched: {found_movies.len}"
 
   # Here we will compute the average representative score by computing

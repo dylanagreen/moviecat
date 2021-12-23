@@ -262,7 +262,7 @@ proc get_ranked_movies_by_year*(year: string, deliniation: yearType): seq[Row] =
   var
     # Using an inner join to make sure that the returned combined movie results
     # are in ranking order
-    clause = if deliniation == yearType.released: "imdb_db.year LIKE ?"
+    clause = if deliniation == yearType.released: "imdb_db.year=?"
              else: "strftime('%Y', ranking.date)=?"
     search_string = &"SELECT * FROM imdb_db INNER JOIN ranking ON imdb_db.id = ranking.id WHERE {clause} ORDER BY ranking.rank DESC"
     prep = db.prepare(search_string)
