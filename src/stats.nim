@@ -121,10 +121,13 @@ proc print_stats_by_keyword(keyword: string, value: string) =
     found_movies: seq[Row] = @[]
 
   if keyword == "year":
-    found_movies = get_ranked_movies_by_year(value)
+    found_movies = get_ranked_movies_by_release_year(value)
     # I only print this for year because the people ones will print
     # "You have selected" after the refining choice.
-    echo &"Stats for {value}:"
+    echo &"Stats for movies released in {value}:"
+  elif keyword == "watched":
+    found_movies = get_ranked_movies_by_watch_year(value)
+    echo &"Stats for movies watched in {value}:"
   elif keyword == "director":
     let id = refine_choices(find_person(value), "people")[0]
     found_movies = get_ranked_movies_by_person(id, "director")
@@ -178,7 +181,7 @@ proc get_stats*(cmd: string) =
   else:
     let
       vals = cmd.split(' ')
-      keywords = @["movie", "year", "director", "writer"]
+      keywords = @["movie", "year", "watched", "director", "writer"]
       found_keywords = keywords.map(proc(x: string): int = int(x.toLower() in vals))
 
     if sum(found_keywords) > 1:
@@ -222,7 +225,7 @@ proc get_stats*(cmd: string) =
         echo &"Watched on: {rank[2]}"
         echo &"Representative Score: {representative}/10"
 
-    of 1: # year
+    of 1: # release year
       if vals[ind] == "all":
           echo "Number of Movies Ranked Per Year:"
 
@@ -233,11 +236,13 @@ proc get_stats*(cmd: string) =
       else:
         print_stats_by_keyword("year", vals[ind])
 
-    of 2: # director
+    of 2: # year watched
+      print_stats_by_keyword("watched", vals[ind])
+    of 3: # director
       let
         director_name = vals[ind..^1].join(" ")
       print_stats_by_keyword("director", director_name)
-    of 3: # writer
+    of 4: # writer
       let
         writer_name = vals[ind..^1].join(" ")
       print_stats_by_keyword("writer", writer_name)

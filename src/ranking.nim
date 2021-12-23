@@ -256,12 +256,26 @@ proc get_movie_ranking_db*(name: string): seq[Row] =
   # If you don't do this the db will explode when you try do anything.
   prep.finalize()
 
-# Gets all movies ranked in a given year.
-proc get_ranked_movies_by_year*(year: string): seq[Row] =
+# Gets all movies ranked in a given (release) year.
+proc get_ranked_movies_by_release_year*(year: string): seq[Row] =
   var
     # Using an inner join to make sure that the returned combined movie results
     # are in ranking order
     search_string = "SELECT * FROM imdb_db INNER JOIN ranking ON imdb_db.id = ranking.id WHERE imdb_db.year LIKE ? ORDER BY ranking.rank DESC"
+    prep = db.prepare(search_string)
+
+  prep.bindParam(1, year)
+  result = db.getAllRows(prep)
+
+  # If you don't do this the db will explode when you try do anything.
+  prep.finalize()
+
+# Gets all movies ranked in a given year.
+proc get_ranked_movies_by_watch_year*(year: string): seq[Row] =
+  var
+    # Using an inner join to make sure that the returned combined movie results
+    # are in ranking order
+    search_string = "SELECT * FROM imdb_db INNER JOIN ranking ON imdb_db.id = ranking.id WHERE strftime('%Y', ranking.date)=? ORDER BY ranking.rank DESC"
     prep = db.prepare(search_string)
 
   prep.bindParam(1, year)
