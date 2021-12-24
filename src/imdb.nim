@@ -12,6 +12,9 @@ import system
 
 let db* = open(getAppDir() / "cat.db", "", "", "")
 
+type keywordType* = enum
+  movie, year, watched, director, writer
+
 # I keep this line here for testing rebuilding the imdb database from scratch.
 # db.exec(sql"DROP TABLE IF EXISTS imdb_db")
 # db.exec(sql"DROP TABLE IF EXISTS people")

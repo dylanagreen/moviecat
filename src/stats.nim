@@ -116,24 +116,22 @@ proc get_all_stats*() =
     echo &"{val.score}/10: [{get_overall_rank(rank)}] {movie_row_to_string(val.movie)}"
 
 
-proc print_stats_by_keyword(keyword: string, value: string) =
+proc print_stats_by_keyword(keyword: keywordType, value: string) =
   var
     found_movies: seq[Row] = @[]
 
-  if keyword == "year":
-    found_movies = get_ranked_movies_by_year(value, yearType.released)
+  if keyword == keywordType.year or keyword == keywordType.watched:
+    found_movies = get_ranked_movies_by_year(value, keyword)
+
     # I only print this for year because the people ones will print
     # "You have selected" after the refining choice.
-    echo &"Stats for movies released in {value}:"
-  elif keyword == "watched":
-    found_movies = get_ranked_movies_by_year(value, yearType.watched)
-    echo &"Stats for movies watched in {value}:"
-  elif keyword == "director":
+    if keyword == keywordType.watched:
+      echo &"Stats for movies watched in {value}:"
+    else:
+       echo &"Stats for movies released in {value}:"
+  else:
     let id = refine_choices(find_person(value), "people")[0]
-    found_movies = get_ranked_movies_by_person(id, "director")
-  elif keyword == "writer":
-    let id = refine_choices(find_person(value), "people")[0]
-    found_movies = get_ranked_movies_by_person(id, "writer")
+    found_movies = get_ranked_movies_by_person(id, keyword)
 
   # Need this to find the representitive scores
   let lower_bounds = get_score_bounds()
@@ -185,11 +183,13 @@ proc get_stats*(cmd: string) =
   else:
     let
       vals = cmd.split(' ')
-      keywords = @["movie", "year", "watched", "director", "writer"]
+      # Not sure if brilliant or stupid.
+      keywords = @[$keywordType.movie, $keywordType.year, $keywordType.watched,
+                   $keywordType.director, $keywordType.writer]
       found_keywords = keywords.map(proc(x: string): int = int(x.toLower() in vals))
 
     if sum(found_keywords) > 1:
-      echo "Please specify only one of the following keywords: movie, year, director, writer."
+      echo &"Please specify only one of the following keywords: {keywords}"
       return
 
     let
@@ -238,17 +238,17 @@ proc get_stats*(cmd: string) =
           for i in 0..<year_count.len:
             echo &"{year_count[i][0]}: {year_count[i][1]}"
       else:
-        print_stats_by_keyword("year", vals[ind])
+        print_stats_by_keyword(keywordType.year, vals[ind])
 
     of 2: # year watched
-      print_stats_by_keyword("watched", vals[ind])
+      print_stats_by_keyword(keywordType.watched, vals[ind])
     of 3: # director
       let
         director_name = vals[ind..^1].join(" ")
-      print_stats_by_keyword("director", director_name)
+      print_stats_by_keyword(keywordType.director, director_name)
     of 4: # writer
       let
         writer_name = vals[ind..^1].join(" ")
-      print_stats_by_keyword("writer", writer_name)
+      print_stats_by_keyword(keywordType.writer, writer_name)
     else:
-      echo "Please specify one of the following keywords: movie, year, director, writer."
+      echo &"Please specify only one of the following keywords: {keywords}"

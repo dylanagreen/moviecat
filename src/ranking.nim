@@ -10,8 +10,6 @@ import ui_helper
 # Type for the comparison procedure that takes in a
 # string and an int and returns a bool
 type cmpProc = proc(movie: string, rank: int): bool
-type yearType* = enum
-  released, watched
 
 # Find the movie in the movie db that corresponds to the id in this ranking.
 proc ranking_to_string(ranking: Row, watched=false): string =
@@ -258,11 +256,11 @@ proc get_movie_ranking_db*(name: string): seq[Row] =
   prep.finalize()
 
 # Gets all movies ranked in a given year.
-proc get_ranked_movies_by_year*(year: string, deliniation: yearType): seq[Row] =
+proc get_ranked_movies_by_year*(year: string, keyword: keywordType): seq[Row] =
   var
     # Using an inner join to make sure that the returned combined movie results
     # are in ranking order
-    clause = if deliniation == yearType.released: "imdb_db.year=?"
+    clause = if keyword == keywordType.year: "imdb_db.year=?"
              else: "strftime('%Y', ranking.date)=?"
     search_string = &"SELECT * FROM imdb_db INNER JOIN ranking ON imdb_db.id = ranking.id WHERE {clause} ORDER BY ranking.rank DESC"
     prep = db.prepare(search_string)
@@ -273,8 +271,16 @@ proc get_ranked_movies_by_year*(year: string, deliniation: yearType): seq[Row] =
   # If you don't do this the db will explode when you try do anything.
   prep.finalize()
 
-proc get_ranked_movies_by_person*(person: string, role: string = "director"): seq[Row] =
+proc get_ranked_movies_by_person*(person: string, role: keywordType): seq[Row] =
+  if role != keywordType.director and role != keywordType.writer:
+    echo "Invalid role, must be director or writer."
+    return
+
   var
+    # Because the keywords are defined as writer/director already this code
+    # works as intended by converting the keyword to string which is then
+    # inseted, where the strings are the same as both the name of the enum field
+    # and the table.
     search_string = &"SELECT * FROM imdb_db A INNER JOIN ranking B ON A.id = B.id WHERE A.id IN (SELECT C.movie FROM {role}s C WHERE C.{role}=?) ORDER BY B.rank DESC"
     prep = db.prepare(search_string)
 
