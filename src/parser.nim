@@ -25,8 +25,8 @@ proc refine_search(): seq[string] =
   echo "Refine search options:"
   var good_options: seq[string]
   for opt in active_options:
-    echo &"{option_names[ord(opt)]}"
-    good_options.add(option_names[ord(opt)])
+    echo &"{opt}"
+    good_options.add($opt)
 
   echo "Input \"N\" to skip."
 

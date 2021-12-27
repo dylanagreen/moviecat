@@ -4,13 +4,11 @@ import streams
 import strformat
 import strutils
 
+import imdb
 import ui_helper
 
-# Option related enum and set/seq
-type SearchOptions* = enum
-  BYYEAR, BYDIRECTOR, BYWRITER
-
-var active_options*: set[SearchOptions]
+var active_options*: set[keywordType]
+let searchable: seq[keywordType] = @[keywordType.year, keywordType.director, keywordType.writer]
 let option_names*: array[3, string] = ["year", "director", "writer"]
 
 proc save_options*() =
@@ -24,16 +22,16 @@ proc set_option_to_value*(option: string, value: bool) =
   let ind = option_names.find(option)
 
   # Insert the correct enum value for this option.
-  if value: active_options.incl(SearchOptions(ind))
-  else: active_options.excl(SearchOptions(ind))
+  if value: active_options.incl(searchable[ind])
+  else: active_options.excl(searchable[ind])
 
 proc set_options*() =
   # Just print lines at first to confirm everything
   echo "Options to edit:"
-  for opt in SearchOptions:
+  for opt in searchable:
     # If the option is active print that it is, otherwise it isn't.
     let val = if opt in active_options: "true" else: "false"
-    echo &"{option_names[ord(opt)]}: {val}"
+    echo &"{opt}: {val}"
   echo "What would you like to edit?"
 
   var
