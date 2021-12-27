@@ -130,7 +130,11 @@ proc print_stats_by_keyword(keyword: keywordType, value: string) =
     else:
        echo &"Stats for movies released in {value}:"
   else:
-    let id = refine_choices(find_person(value), "people")[0]
+    let choices = refine_choices(find_person(value), "people")
+    if choices.len < 1:
+      echo &"No person found with name {value}"
+      return
+    let id = choices[0]
     found_movies = get_ranked_movies_by_person(id, keyword)
 
   # Need this to find the representitive scores
