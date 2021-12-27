@@ -63,6 +63,12 @@ proc print_rankings*(cmd: string) =
     if details.success:
       where_clause &= &" WHERE A.id in (SELECT B.id FROM imdb_db B WHERE B.year={details.val})"
 
+    details = extract_val(cmd, keywordType.watched)
+    if details.success:
+      # I.e. if you have a WHERE clause, then this needs to be an AND instead
+      let join = if "WHERE" in where_clause: "AND" else: "WHERE"
+      where_clause &= &" {join} strftime('%Y', A.date) LIKE {details.val}"
+
     details = extract_val(cmd, keywordType.director)
     if details.success:
       let join = if "WHERE" in where_clause: "AND" else: "WHERE"
@@ -74,12 +80,17 @@ proc print_rankings*(cmd: string) =
       where_clause &= &" {join} A.id in (SELECT B.movie FROM writers B WHERE B.writer=\"{details.val}\")"
 
   search_string = &"SELECT A.* FROM ranking A{where_clause} ORDER BY rank {order_by} LIMIT ?"
-  rows = db.getAllRows(sql(search_string), num)
+  var prep = db.prepare(search_string)
+  prep.bindParam(1, num)
+
+  rows = db.getAllRows(prep)
   for i in 0..<rows.len:
     if order_by == "DESC":
       echo &"[{i + 1}] {ranking_to_string(rows[i], true)}"
     else:
       echo &"[{rows.len - i}] {ranking_to_string(rows[i], true)}"
+
+  prep.finalize()
 
 
 proc insert_at_rank(movie: Row, rank: int, date = "") =
