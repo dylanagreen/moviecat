@@ -23,16 +23,14 @@ proc refine_search(): seq[string] =
     return
 
   echo "Refine search options:"
-  var good_options: seq[string]
+  var good_options: seq[keywordType]
   for opt in active_options:
     echo &"{opt}"
-    good_options.add($opt)
+    good_options.add(opt)
 
   echo "Input \"N\" to skip."
 
-  var
-    cmd = receive_command()
-
+  var cmd = receive_command()
   if cmd.toLower() == "n":
     return
 
@@ -40,7 +38,7 @@ proc refine_search(): seq[string] =
   for opt in good_options:
     var details = extract_val(cmd, opt)
     if details.success:
-      result.add(opt)
+      result.add($opt)
       result.add(details.val)
 
 proc find_movie(cmd: string): Row =

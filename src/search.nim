@@ -1,15 +1,23 @@
 import sequtils
+import strformat
 import strutils
 
 import imdb
 import ui_helper
 
-proc extract_val*(cmd: string, extract: string): tuple[success: bool, val: string] =
+proc extract_val*(cmd: string, extract: keywordType): tuple[success: bool, val: string] =
   var vals = cmd.split(' ')
-  if extract == "year" and "year" in vals:
+  let ind = vals.find($extract)
+
+  # If the keyword is not found, return false
+  if ind == -1:
+    echo &"{extract} not found."
+    return
+
+  if extract == keywordType.year:
     var year = 0
     try:
-      year = parseInt(vals[vals.find("year") + 1])
+      year = parseInt(vals[ind + 1])
 
       # Catch passing negative years.
       if year < 0:
@@ -23,7 +31,24 @@ proc extract_val*(cmd: string, extract: string): tuple[success: bool, val: strin
     if year > 0:
       result = (true, $year)
 
-  if extract == "director" and "director" in vals:
+  if extract == keywordType.watched:
+    var year = 0
+    try:
+      year = parseInt(vals[ind + 1])
+
+      # Catch passing negative years.
+      if year < 0:
+        year = 0
+        echo "Invalid year"
+
+    # Index defect when we don't pass a year at all lol.
+    except ValueError, IndexDefect:
+      echo "Invalid year"
+
+    if year > 0:
+      result = (true, $year)
+
+  if extract == keywordType.director:
     var director = ""
     try:
       vals = cmd.split('"')
@@ -44,7 +69,7 @@ proc extract_val*(cmd: string, extract: string): tuple[success: bool, val: strin
     except IndexDefect:
       echo "Invalid director. Did you forget quotation marks?"
 
-  if extract == "writer" and "writer" in vals:
+  if extract == keywordType.writer:
     var writer = ""
     try:
       vals = cmd.split('"')

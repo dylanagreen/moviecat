@@ -59,17 +59,16 @@ proc print_rankings*(cmd: string) =
       except: # Will catch both index out of bounds (no value) or value error
         echo "Invalid number to print, defaulting to bottom 10."
 
-    var details = extract_val(cmd, "year")
+    var details = extract_val(cmd, keywordType.year)
     if details.success:
       where_clause &= &" WHERE A.id in (SELECT B.id FROM imdb_db B WHERE B.year={details.val})"
 
-    details = extract_val(cmd, "director")
+    details = extract_val(cmd, keywordType.director)
     if details.success:
-      # I.e. "If we already have a WHERE clause, then this must become an AND"
       let join = if "WHERE" in where_clause: "AND" else: "WHERE"
       where_clause &= &" {join} A.id in (SELECT B.movie FROM directors B WHERE B.director=\"{details.val}\")"
 
-    details = extract_val(cmd, "writer")
+    details = extract_val(cmd, keywordType.writer)
     if details.success:
       let join = if "WHERE" in where_clause: "AND" else: "WHERE"
       where_clause &= &" {join} A.id in (SELECT B.movie FROM writers B WHERE B.writer=\"{details.val}\")"
