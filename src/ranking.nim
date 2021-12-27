@@ -61,34 +61,41 @@ proc print_rankings*(cmd: string) =
 
     var details = extract_val(cmd, keywordType.year)
     if details.success:
-      where_clause &= &" WHERE A.id in (SELECT B.id FROM imdb_db B WHERE B.year={details.val})"
+      where_clause &= &" WHERE A.year={details.val}"
 
     details = extract_val(cmd, keywordType.watched)
     if details.success:
       # I.e. if you have a WHERE clause, then this needs to be an AND instead
       let join = if "WHERE" in where_clause: "AND" else: "WHERE"
-      where_clause &= &" {join} strftime('%Y', A.date) LIKE {details.val}"
+      where_clause &= &" {join} strftime('%Y', B.date) LIKE {details.val}"
 
     details = extract_val(cmd, keywordType.director)
     if details.success:
       let join = if "WHERE" in where_clause: "AND" else: "WHERE"
-      where_clause &= &" {join} A.id in (SELECT B.movie FROM directors B WHERE B.director=\"{details.val}\")"
+      where_clause &= &" {join} A.id in (SELECT C.movie FROM directors C WHERE C.director=\"{details.val}\")"
 
     details = extract_val(cmd, keywordType.writer)
     if details.success:
       let join = if "WHERE" in where_clause: "AND" else: "WHERE"
-      where_clause &= &" {join} A.id in (SELECT B.movie FROM writers B WHERE B.writer=\"{details.val}\")"
+      where_clause &= &" {join} A.id in (SELECT C.movie FROM writers C WHERE C.writer=\"{details.val}\")"
 
-  search_string = &"SELECT A.* FROM ranking A{where_clause} ORDER BY rank {order_by} LIMIT ?"
+  search_string = &"SELECT * FROM imdb_db A INNER JOIN ranking B ON A.id = B.id {where_clause} ORDER BY B.rank {order_by} LIMIT ?"
   var prep = db.prepare(search_string)
   prep.bindParam(1, num)
 
   rows = db.getAllRows(prep)
   for i in 0..<rows.len:
+    var
+      temp = rows[i]
+      str = movie_row_to_string(temp)
+
+    if not temp[^1].isEmptyOrWhitespace:
+      str = str & &" (Watched on {temp[^1]})"
+
     if order_by == "DESC":
-      echo &"[{i + 1}] {ranking_to_string(rows[i], true)}"
+      echo &"[{i + 1}] {str}"
     else:
-      echo &"[{rows.len - i}] {ranking_to_string(rows[i], true)}"
+      echo &"[{rows.len - i}] {str}"
 
   prep.finalize()
 
