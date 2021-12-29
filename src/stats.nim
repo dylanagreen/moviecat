@@ -139,6 +139,7 @@ proc print_stats_by_keyword(keyword: keywordType, value: string) =
 
   # Need this to find the representitive scores
   let lower_bounds = get_score_bounds()
+  echo lower_bounds
 
   if found_movies.len < 1:
     echo &"No movies watched for {value}. Go rank some!"
@@ -158,7 +159,7 @@ proc print_stats_by_keyword(keyword: keywordType, value: string) =
     # The representative will only be -1 if every single value is a 1
     # in which case the movie is in the highest score bound and is therefore
     # a 10/10, not a -1/10 lol.
-    var representative = lower_than_rank.find(0)
+    var representative = lower_than_rank.find(0) - 1
     representative = if representative >= 0: representative else: 10
     reps.add(representative)
 
@@ -226,7 +227,7 @@ proc get_stats*(cmd: string) =
         # The representative will only be -1 if every single value is a 1
         # in which case the movie is in the highest score bound and is therefore
         # a 10/10, not a -1/10 lol.
-        var representative = lower_than_rank.find(0)
+        var representative = lower_than_rank.find(0) - 1
         representative = if representative >= 0: representative else: 10
         echo &"Stats for {movie_row_to_string(found_movie)}:"
         echo &"Rank: {get_overall_rank(rank[1].parseInt())}"
