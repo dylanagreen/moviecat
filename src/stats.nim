@@ -98,6 +98,10 @@ proc get_representative(): seq[tuple[score: int, movie: Row]] =
 proc get_all_stats*() =
   let num_ranked = db.getValue(sql"SELECT COUNT(ALL) from ranking").parseInt()
 
+  if num_ranked < 1:
+    echo "No movies ranked, go rank some!"
+    return
+
   echo &"Number of Movies Ranked: {num_ranked}"
 
   proc print_stats_table(t: Table[string, Row]) =
