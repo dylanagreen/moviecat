@@ -26,11 +26,11 @@ sqlite database.
 
 To compile moviecat run the following:
 ```
-nim c src/main.nim
+nim c src/moviecat.nim
 ```
 
 For a quicker, but potentially more unstable version you can turn on the `-d:release` or
-`-d:danger` flags.
+`-d:danger` flags. Release binaries are compiled using `-d:release`.
 
 moviecat requires Nim >= 1.4.2 as it requires db_sqlite procs that were not added until that version.
 
