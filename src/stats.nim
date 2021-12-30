@@ -143,7 +143,6 @@ proc print_stats_by_keyword(keyword: keywordType, value: string) =
 
   # Need this to find the representitive scores
   let lower_bounds = get_score_bounds()
-  echo lower_bounds
 
   if found_movies.len < 1:
     echo &"No movies watched for {value}. Go rank some!"
@@ -197,7 +196,7 @@ proc get_stats*(cmd: string) =
                    $keywordType.director, $keywordType.writer]
       found_keywords = keywords.map(proc(x: string): int = int(x.toLower() in vals))
 
-    if sum(found_keywords) > 1:
+    if sum(found_keywords) != 1:
       echo &"Please specify only one of the following keywords: {keywords}"
       return
 
