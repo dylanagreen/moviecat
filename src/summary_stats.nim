@@ -37,11 +37,11 @@ proc get_score_bounds(): seq[int] =
     # 3/2 sigma: three_halves
     # 2 sigma: second
     # 5/2 sigma: five_halves
-    half = int(floor(float(num_ranked) * 0.3829))
-    first = int(floor(float(num_ranked) * 0.6827))
-    three_halves = int(floor(float(num_ranked) * 0.86638))
-    second = int(floor(float(num_ranked) * 0.9545))
-    five_halves = int(floor(float(num_ranked) * 0.98758))
+    half = int(round(float(num_ranked) * 0.3829))
+    first = int(round(float(num_ranked) * 0.6827))
+    three_halves = int(round(float(num_ranked) * 0.86638))
+    second = int(round(float(num_ranked) * 0.9545))
+    five_halves = int(round(float(num_ranked) * 0.98758))
 
     intervals = @[num_ranked, five_halves, second, three_halves, first, half]
 
@@ -131,7 +131,6 @@ proc get_all_stats*() =
   # representative score/10 movies.
   echo "\nRepresentative Movies"
   var reps = get_representative()
-  echo reps
   for val in reps:
     let rank = get_rank(val.movie)[1].parseInt()
     echo &"{val.score}/10: [{get_overall_rank(rank)}] {movie_row_to_string(val.movie)}"
