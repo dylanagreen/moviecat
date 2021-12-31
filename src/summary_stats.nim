@@ -22,7 +22,13 @@ proc median(x: seq[int]): float =
 
 proc get_score_bounds(): seq[int] =
   let
-    num_ranked = db.getValue(sql"SELECT COUNT(ALL) from ranking").parseInt()
+    # We subtract 1 to make this 0-indexed, because no matter what this value
+    # is, the lower bound is always assumed to be 0 for simplicity.
+    # Later, to ensure that these score bounds are 1-indexed (because the
+    # ranking database is 1 indexed) we will 1 to all bounds, which brings the
+    # lower bound up to 1, and brings the upper most bound from num_ranked - 1
+    # up to num_ranked as we expected & require.
+    num_ranked = db.getValue(sql"SELECT COUNT(ALL) from ranking").parseInt() - 1
     half_movies = num_ranked div 2
 
     # How many movies should be contained within:
@@ -47,7 +53,7 @@ proc get_score_bounds(): seq[int] =
 
   # Subtracting the reversed from the max gives us new lower bounds
   reverse_lower = reverse_lower.map(proc(x: int): int = num_ranked - x)
-  result = concat(lower_bounds, reverse_lower)
+  result = concat(lower_bounds, reverse_lower).map(proc(x: int): int = x + 1)
 
 
 proc get_oldest_newest*(): Table[string, Row] =
@@ -125,6 +131,7 @@ proc get_all_stats*() =
   # representative score/10 movies.
   echo "\nRepresentative Movies"
   var reps = get_representative()
+  echo reps
   for val in reps:
     let rank = get_rank(val.movie)[1].parseInt()
     echo &"{val.score}/10: [{get_overall_rank(rank)}] {movie_row_to_string(val.movie)}"
