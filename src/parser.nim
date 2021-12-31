@@ -6,7 +6,7 @@ import imdb
 import options
 import ranking
 import search
-import stats
+import summary_stats
 import ui_helper
 
 let

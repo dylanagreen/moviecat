@@ -2,6 +2,7 @@ import algorithm
 import db_sqlite
 import math
 import sequtils
+# import nim/stats
 import strformat
 import strutils
 import tables
