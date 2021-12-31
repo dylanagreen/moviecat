@@ -2,7 +2,7 @@ import algorithm
 import db_sqlite
 import math
 import sequtils
-# import nim/stats
+import stats
 import strformat
 import strutils
 import tables
@@ -10,6 +10,15 @@ import tables
 import imdb
 import ranking
 import ui_helper
+
+proc median(x: seq[int]): float =
+  var y = deepCopy(x)
+  sort(y)
+  if len(y) mod 2 == 0:
+    result = float(y[(len(y) - 1) div 2])
+  else:
+    result = (y[(len(y) - 1) div 2] + y[(len(y) - 1) div 2 + 1]) / 2
+
 
 proc get_score_bounds(): seq[int] =
   let
@@ -170,7 +179,8 @@ proc print_stats_by_keyword(keyword: keywordType, value: string) =
   echo &"Highest Ranked: {movie_row_to_string(found_movies[0])} ({reps[0]}/10)"
   echo &"Lowest Ranked: {movie_row_to_string(found_movies[^1])} ({reps[^1]}/10)"
 
-  echo &"Average Representative Score: {round(reps.sum() / reps.len, 2)}/10"
+  echo &"Mean Representative Score: {round(mean(reps), 3)}/10"
+  echo &"Median Representative Score: {round(median(reps), 3)}/10"
   # If you ranked less than 10 movies from that year, only display
   # amount of movies you ranked.
   let term = if found_movies.len < 10: found_movies.len else: 10
