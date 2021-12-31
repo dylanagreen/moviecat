@@ -11,7 +11,7 @@ proc extract_val*(cmd: string, extract: keywordType): tuple[success: bool, val: 
 
   # If the keyword is not found, return false
   if ind == -1:
-    echo &"{extract} not found."
+    when defined(debug): echo &"{extract} not found."
     return
 
   if extract == keywordType.year:

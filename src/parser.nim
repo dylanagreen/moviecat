@@ -10,7 +10,7 @@ import summary_stats
 import ui_helper
 
 let
-  version = "moviecat v0.3.0dev - Aegean"
+  version = "moviecat v0.3.0rc1 - Aegean"
   author = "by Dylan Green"
 
 proc about() =
