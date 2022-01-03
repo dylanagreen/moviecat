@@ -10,6 +10,8 @@ import strutils
 import strformat
 import system
 
+import times
+
 let db* = open(getAppDir() / "cat.db", "", "", "")
 
 type keywordType* = enum
@@ -17,6 +19,8 @@ type keywordType* = enum
 
 # I keep this line here for testing rebuilding the imdb database from scratch.
 # db.exec(sql"DROP TABLE IF EXISTS imdb_db")
+# db.exec(sql"DROP TABLE IF EXISTS imdb_update")
+# db.exec(sql"DROP TABLE IF EXISTS imdb_old")
 # db.exec(sql"DROP TABLE IF EXISTS people")
 # db.exec(sql"DROP TABLE IF EXISTS ranking")
 
@@ -179,10 +183,14 @@ proc initialize_crew*(name: string = "title.crew.tsv", crew="director") =
   echo &"{crew}s table created"
 
 proc initialize_movies*(name: string = "title.basics.tsv") =
+  var db_name = "imdb_db"
+  var exists_stmt = db.prepare(&"SELECT name FROM sqlite_master WHERE type='table' AND name='{db_name}'")
   # Checks to see if the table already exists and if it does we bail
-  if db.getValue(sql"SELECT name FROM sqlite_master WHERE type='table' AND name='imdb_db'") != "":
-    echo "Movies table detected"
-    return
+  if db.getValue(exists_stmt) != "":
+    echo "Movies table detected, entering update mode"
+    db_name = "imdb_update"
+
+  exists_stmt.finalize()
 
   # For future reference note that format of the tsv is as follows for the header:
   # tconst, movie, primarytitle, originaltitle, isadult, startyear, endyear, runtime, genres
@@ -196,11 +204,13 @@ proc initialize_movies*(name: string = "title.basics.tsv") =
 
   # If we got here then the table doesn't exist so we will create it.
   # Gonna throw in a if not exists justtttt in case.
-  db.exec(sql"""CREATE TABLE IF NOT EXISTS imdb_db (
+  var create_stmt = db.prepare(&"""CREATE TABLE IF NOT EXISTS {db_name} (
                  id   TEXT PRIMARY KEY,
                  name TEXT NOT NULL,
                  year INT
-              )""")
+                 )""")
+  db.exec(create_stmt)
+  create_stmt.finalize()
 
   var parser: CSVParser
   parser.open(loc, separator='\t', quote='\0')
@@ -216,7 +226,7 @@ proc initialize_movies*(name: string = "title.basics.tsv") =
     year = cols.find("startYear")
 
 
-  var prep = db.prepare("INSERT INTO imdb_db (id, name, year) VALUES (?, ?, ?)")
+  var prep = db.prepare(&"INSERT INTO {db_name} (id, name, year) VALUES (?, ?, ?)")
   db.exec(sql"BEGIN TRANSACTION")
 
   while parser.readRow():
@@ -231,9 +241,6 @@ proc initialize_movies*(name: string = "title.basics.tsv") =
       db.exec(prep)
       discard reset(prep.PStmt)
 
-      # db.exec(sql"INSERT INTO imdb_db (id, name, year) VALUES (?, ?, ?)",
-      #         parser.row[id], parser.row[title], parseInt(parser.row[year]))
-
   db.exec(sql"END TRANSACTION")
 
   # If you don't do this the db will explode when you try do anything.
@@ -241,6 +248,25 @@ proc initialize_movies*(name: string = "title.basics.tsv") =
 
   # Always want to close when you're done for memory purposes!
   parser.close()
+
+  if db_name == "imdb_update":
+    var t1 = cpuTime()
+    # Rename the database old then move the new one into place
+    db.exec(sql"""ALTER TABLE imdb_db RENAME TO imdb_old""")
+    db.exec(sql"""ALTER TABLE imdb_update RENAME TO imdb_db""")
+
+    # This left join keeps any entries that were in the old data base that
+    # ARE NOT in the new one. This is for movies you may have ranked but
+    # that IMDB later "reclassified" to not be a movie, and so will be skipped
+    # when parsing the tsv.
+    db.exec(sql"""INSERT INTO imdb_db (id, name, year)
+              SELECT * FROM imdb_old WHERE imdb_old.id NOT IN
+              (SELECT id FROM imdb_db)""")
+
+    # Deleting the imdb_old database.
+    db.exec(sql"DROP TABLE IF EXISTS imdb_old")
+    var t2 = cpuTime()
+    echo &"Table update took {t2 - t1} seconds."
 
 # Looks for the movie you wanted in the imdb database you loaded.
 proc find_movie_db*(name: string, params: seq[string]): seq[Row] =
