@@ -26,3 +26,5 @@ proc should_update*(): bool =
     # Update once a week
     if (last_update - current).inWeeks > UPDATE_CADENCE:
       result = true
+
+  if result: echo "Database is over a week old, you should update!"

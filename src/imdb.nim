@@ -9,8 +9,8 @@ import sets
 import strutils
 import strformat
 import system
-
 import times
+
 import update
 
 let db* = open(getAppDir() / "cat.db", "", "", "")
@@ -183,14 +183,14 @@ proc initialize_crew*(name: string = "title.crew.tsv", crew="director") =
 
   echo &"{crew}s table created"
 
-proc initialize_movies*(name: string = "title.basics.tsv") =
+proc initialize_movies*(name: string = "title.basics.tsv", update=false) =
   var db_name = "imdb_db"
   var exists_stmt = db.prepare(&"SELECT name FROM sqlite_master WHERE type='table' AND name='{db_name}'")
   # Checks to see if the table already exists and if it does we bail
   if db.getValue(exists_stmt) != "":
     echo "Movies table detected"
-    if should_update():
-      echo &"Longer than {UPDATE_CADENCE} week since last update; entering update mode..."
+    if update:
+      echo &"Entering update mode..."
       db_name = "imdb_update"
     else:
       exists_stmt.finalize()

@@ -9,12 +9,15 @@ import imdb
 import options
 import parser
 import ui_helper
-
-var cmd: string
+import update
 
 echo "Initializing db, please hold a moment..."
-var t1 = cpuTime()
-initialize_movies() # Actually initializes the database.
+var
+  cmd: string
+  t1 = cpuTime()
+  to_update = should_update()
+
+initialize_movies(update=to_update) # Actually initializes the database.
 
 # Load the directors and writers here.
 # Do the link table first since we only load the people who
