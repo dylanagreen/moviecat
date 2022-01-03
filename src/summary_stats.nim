@@ -213,8 +213,10 @@ proc get_stats*(cmd: string) =
                    $keywordType.director, $keywordType.writer]
       found_keywords = keywords.map(proc(x: string): int = int(x.toLower() in vals))
 
+      keyword_string = keywords.join(", ")
+
     if sum(found_keywords) != 1:
-      echo &"Please specify only one of the following keywords: {keywords}"
+      echo &"Please specify only one of the following keywords: {keyword_string}"
       return
 
     let
@@ -276,4 +278,4 @@ proc get_stats*(cmd: string) =
         writer_name = vals[ind..^1].join(" ")
       print_stats_by_keyword(keywordType.writer, writer_name)
     else:
-      echo &"Please specify only one of the following keywords: {keywords}"
+      echo &"Please specify one of the following keywords: {keyword_string}"
