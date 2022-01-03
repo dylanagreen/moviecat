@@ -15,16 +15,22 @@ echo "Initializing db, please hold a moment..."
 var
   cmd: string
   t1 = cpuTime()
-  to_update = should_update()
+  should_update = should_update()
 
-initialize_movies(update=to_update) # Actually initializes the database.
+initialize_movies(should_update=should_update) # Actually initializes the database.
 
 # Load the directors and writers here.
 # Do the link table first since we only load the people who
 # direct or write, not act.
-initialize_crew(crew="director")
-initialize_crew(crew="writer")
-initialize_people()
+initialize_crew(crew="director", should_update=should_update)
+initialize_crew(crew="writer", should_update=should_update)
+initialize_people(should_update=should_update)
+
+# Recording this update for future should_update() calls.
+# Do this after initialization because if a file isn't found init will fail
+# And by extension so will the update.
+if should_update:
+  write_update_time()
 
 var
   num = db.getValue(sql"SELECT COUNT(ALL) from imdb_db")
