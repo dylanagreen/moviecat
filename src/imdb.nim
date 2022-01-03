@@ -11,8 +11,6 @@ import strformat
 import system
 import times
 
-import update
-
 let db* = open(getAppDir() / "cat.db", "", "", "")
 
 type keywordType* = enum
@@ -57,12 +55,20 @@ proc pretty_print_movie*(movie: Row): string =
     result &= &"{c}: {name}\n"
 
 
-proc initialize_people*(name: string = "name.basics.tsv") =
+proc initialize_people*(name: string = "name.basics.tsv", should_update = false) =
+  var db_name = &"people"
+  var exists_stmt = db.prepare(&"SELECT name FROM sqlite_master WHERE type='table' AND name='{db_name}'")
   # Checks to see if the table already exists and if it does we bail
-  if db.getValue(sql"SELECT name FROM sqlite_master WHERE type='table' AND name='people'") != "":
-    echo "People table detected"
-    return
+  if db.getValue(exists_stmt) != "":
+    echo &"{db_name} table detected"
+    if should_update:
+      echo &"Entering update mode..."
+      db_name = &"people_update"
+    else:
+      exists_stmt.finalize()
+      return
 
+  exists_stmt.finalize()
   # For future reference note that format of the tsv is as follows for the header:
   # tconst, movie, primarytitle, originaltitle, isadult, startyear, endyear, runtime, genres
   # Original title is the original language form of the title
@@ -75,10 +81,12 @@ proc initialize_people*(name: string = "name.basics.tsv") =
 
   # If we got here then the table doesn't exist so we will create it.
   # Gonna throw in a if not exists justtttt in case.
-  db.exec(sql"""CREATE TABLE IF NOT EXISTS people (
-                 id   TEXT PRIMARY KEY,
-                 name TEXT NOT NULL
-              )""")
+  var create_stmt = db.prepare(&"""CREATE TABLE IF NOT EXISTS {db_name} (
+                              id   TEXT PRIMARY KEY,
+                              name TEXT NOT NULL
+                              )""")
+  db.exec(create_stmt)
+  create_stmt.finalize()
 
   var parser: CSVParser
   parser.open(loc, separator='\t', quote='\0')
@@ -96,7 +104,7 @@ proc initialize_people*(name: string = "name.basics.tsv") =
     title = cols.find("primaryName")
 
 
-  var prep = db.prepare("INSERT INTO people (id, name) VALUES (?, ?)")
+  var prep = db.prepare(&"INSERT INTO {db_name} (id, name) VALUES (?, ?)")
   db.exec(sql"BEGIN TRANSACTION")
 
   while parser.readRow():
@@ -119,12 +127,35 @@ proc initialize_people*(name: string = "name.basics.tsv") =
 
   echo "People table created"
 
+  if should_update:
+    # Rename the database old then move the new one into place
+    db.exec(sql(&"ALTER TABLE people RENAME TO people_old"))
+    db.exec(sql(&"ALTER TABLE {db_name} RENAME TO people"))
 
-proc initialize_crew*(name: string = "title.crew.tsv", crew="director") =
+    # This left join keeps any entries that were in the old data base that
+    # ARE NOT in the new one.
+    db.exec(sql(&"""INSERT INTO people (id, name)
+              SELECT * FROM people_old WHERE people_old.id NOT IN
+              (SELECT id FROM people)"""))
+
+    # Deleting the _old database.
+    db.exec(sql(&"DROP TABLE IF EXISTS people_old"))
+
+
+proc initialize_crew*(name: string = "title.crew.tsv", crew = "director", should_update = false) =
+  var db_name = &"{crew}s"
+  var exists_stmt = db.prepare(&"SELECT name FROM sqlite_master WHERE type='table' AND name='{db_name}'")
   # Checks to see if the table already exists and if it does we bail
-  if db.getValue(sql(&"SELECT name FROM sqlite_master WHERE type='table' AND name='{crew}s'")) != "":
-    echo &"{crew}s table detected"
-    return
+  if db.getValue(exists_stmt) != "":
+    echo &"{db_name} table detected"
+    if should_update:
+      echo &"Entering update mode..."
+      db_name = &"{crew}s_update"
+    else:
+      exists_stmt.finalize()
+      return
+
+  exists_stmt.finalize()
 
   let loc = getAppDir() / name
   # Idiot proofing.
@@ -133,22 +164,24 @@ proc initialize_crew*(name: string = "title.crew.tsv", crew="director") =
     # logging.error(&"Attempted to load {name}")
     raise newException(IOError, &"File {loc} not found!")
 
-  # Now make the directors table.
+  # Now make the directors/writers table.
   # We use a movie/crew combination as a primary key, which ensures
   # that each relation is unique, but allows multiple instances of
   # movies and crew (useful since a crew could direct/write more than one
   # movie and a movie could have more than one writer/director.)
-  db.exec(sql(&"""CREATE TABLE IF NOT EXISTS {crew}s (
-                 movie TEXT REFERENCES imdb_db(id) ON DELETE CASCADE,
-                 {crew} TEXT,
-                 PRIMARY KEY (movie, {crew})
-              )"""))
+  var create_stmt = db.prepare(&"""CREATE TABLE IF NOT EXISTS {db_name} (
+                            movie TEXT REFERENCES imdb_db(id) ON DELETE CASCADE,
+                            {crew} TEXT,
+                            PRIMARY KEY (movie, {crew})
+                            )""")
+  db.exec(create_stmt)
+  create_stmt.finalize()
 
   var parser: CSVParser
   parser.open(loc, separator='\t', quote='\0')
 
+  # Gets all the ids of movies included in the imdb_db
   let movies = map(db.getAllRows(sql"SELECT id FROM imdb_db"), proc(x: Row): string = x[0]).toHashSet
-  # echo movies
 
   # Discarding the true or false row exists boolean
   discard parser.readRow()
@@ -157,7 +190,7 @@ proc initialize_crew*(name: string = "title.crew.tsv", crew="director") =
     id = cols.find("tconst")
     crew_person = cols.find(&"{crew}s")
 
-  var prep = db.prepare(&"INSERT INTO {crew}s (movie, {crew}) VALUES (?, ?)")
+  var prep = db.prepare(&"INSERT INTO {db_name} (movie, {crew}) VALUES (?, ?)")
   db.exec(sql"BEGIN TRANSACTION")
 
   while parser.readRow():
@@ -183,13 +216,29 @@ proc initialize_crew*(name: string = "title.crew.tsv", crew="director") =
 
   echo &"{crew}s table created"
 
-proc initialize_movies*(name: string = "title.basics.tsv", update=false) =
+  if should_update:
+    # Rename the database old then move the new one into place
+    db.exec(sql(&"ALTER TABLE {crew}s RENAME TO {crew}s_old"))
+    db.exec(sql(&"ALTER TABLE {db_name} RENAME TO {crew}s"))
+
+    # This left join keeps any entries that were in the old database that
+    # ARE NOT in the new one. This is for movies you may have ranked but
+    # that IMDB later "reclassified" to not be a movie, and so will be skipped
+    # when parsing the tsv.
+    db.exec(sql(&"""INSERT INTO {crew}s (movie, {crew})
+              SELECT * FROM {crew}s_old WHERE {crew}s_old.movie NOT IN
+              (SELECT movie FROM {crew}s)"""))
+
+    # Deleting the _old database.
+    db.exec(sql(&"DROP TABLE IF EXISTS {crew}s_old"))
+
+proc initialize_movies*(name: string = "title.basics.tsv", should_update = false) =
   var db_name = "imdb_db"
   var exists_stmt = db.prepare(&"SELECT name FROM sqlite_master WHERE type='table' AND name='{db_name}'")
   # Checks to see if the table already exists and if it does we bail
   if db.getValue(exists_stmt) != "":
     echo "Movies table detected"
-    if update:
+    if should_update:
       echo &"Entering update mode..."
       db_name = "imdb_update"
     else:
@@ -255,13 +304,13 @@ proc initialize_movies*(name: string = "title.basics.tsv", update=false) =
   # Always want to close when you're done for memory purposes!
   parser.close()
 
-  if db_name == "imdb_update":
+  if should_update:
     var t1 = cpuTime()
     # Rename the database old then move the new one into place
-    db.exec(sql"""ALTER TABLE imdb_db RENAME TO imdb_old""")
-    db.exec(sql"""ALTER TABLE imdb_update RENAME TO imdb_db""")
+    db.exec(sql"ALTER TABLE imdb_db RENAME TO imdb_old")
+    db.exec(sql"ALTER TABLE imdb_update RENAME TO imdb_db")
 
-    # This left join keeps any entries that were in the old data base that
+    # This left join keeps any entries that were in the old database that
     # ARE NOT in the new one. This is for movies you may have ranked but
     # that IMDB later "reclassified" to not be a movie, and so will be skipped
     # when parsing the tsv.
@@ -273,7 +322,6 @@ proc initialize_movies*(name: string = "title.basics.tsv", update=false) =
     db.exec(sql"DROP TABLE IF EXISTS imdb_old")
     var t2 = cpuTime()
     echo &"Table update took {t2 - t1} seconds."
-    write_update_time()
 
 # Looks for the movie you wanted in the imdb database you loaded.
 proc find_movie_db*(name: string, params: seq[string]): seq[Row] =
