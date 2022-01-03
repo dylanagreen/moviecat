@@ -11,6 +11,7 @@ import strformat
 import system
 
 import times
+import update
 
 let db* = open(getAppDir() / "cat.db", "", "", "")
 
@@ -187,8 +188,13 @@ proc initialize_movies*(name: string = "title.basics.tsv") =
   var exists_stmt = db.prepare(&"SELECT name FROM sqlite_master WHERE type='table' AND name='{db_name}'")
   # Checks to see if the table already exists and if it does we bail
   if db.getValue(exists_stmt) != "":
-    echo "Movies table detected, entering update mode"
-    db_name = "imdb_update"
+    echo "Movies table detected"
+    if should_update():
+      echo &"Longer than {UPDATE_CADENCE} week since last update; entering update mode..."
+      db_name = "imdb_update"
+    else:
+      exists_stmt.finalize()
+      return
 
   exists_stmt.finalize()
 
@@ -267,6 +273,7 @@ proc initialize_movies*(name: string = "title.basics.tsv") =
     db.exec(sql"DROP TABLE IF EXISTS imdb_old")
     var t2 = cpuTime()
     echo &"Table update took {t2 - t1} seconds."
+    write_update_time()
 
 # Looks for the movie you wanted in the imdb database you loaded.
 proc find_movie_db*(name: string, params: seq[string]): seq[Row] =
