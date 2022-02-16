@@ -7,6 +7,7 @@ import options
 import ranking
 import search
 import summary_stats
+import update
 import ui_helper
 
 let
@@ -77,5 +78,7 @@ proc decrypt_command*(cmd: string) =
     about()
   elif cmd.toLower().startsWith("stats"):
     get_stats(cmd)
+  elif cmd.toLower().startsWith("update"):
+    update(cmd)
   else:
     echo "Unrecognized command"
