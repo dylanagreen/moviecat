@@ -34,6 +34,7 @@ proc should_update*(): bool =
   if result: echo "Database is over 4 weeks old, you should update!"
 
 
+# Note to self: You must compile with -d:ssl for this to work.
 proc download_dataset() =
   let client = newHttpClient()
   let files: seq[string] = @["name.basics.tsv.gz", "title.basics.tsv.gz", "title.crew.tsv.gz"]
@@ -42,6 +43,16 @@ proc download_dataset() =
     var save_loc = getAppDir() / f_name
     client.downloadFile(&"https://datasets.imdbws.com/{f_name}", save_loc)
     echo &"Downloaded {f_name}."
+
+
+# Should be self-explanatory
+proc remove_dataset() =
+  let files: seq[string] = @["name.basics.tsv.gz", "title.basics.tsv.gz", "title.crew.tsv.gz"]
+
+  for f_name in files:
+    var loc = getAppDir() / f_name
+    remove_file(loc)
+
 
 proc update*(cmd: string) =
   download_dataset()
@@ -56,4 +67,6 @@ proc update*(cmd: string) =
   initialize_people(should_update=true)
 
   write_update_time()
+
+  remove_dataset()
 
