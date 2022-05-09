@@ -8,7 +8,7 @@ import times
 import imdb
 
 let update_loc* = getAppDir() / "update_info.txt"
-const UPDATE_CADENCE* = 1
+const UPDATE_CADENCE* = 4
 
 proc write_update_time*() =
   # Literally just checks to see if the file exists, if it does write
@@ -31,7 +31,7 @@ proc should_update*(): bool =
     if (current - last_update).inWeeks >= UPDATE_CADENCE:
       result = true
 
-  if result: echo "Database is over a week old, you should update!"
+  if result: echo "Database is over 4 weeks old, you should update!"
 
 
 proc download_dataset() =
