@@ -17,6 +17,9 @@ var
   t1 = cpuTime()
   should_update = should_update()
 
+if should_update:
+  download_dataset()
+
 initialize_movies(should_update=should_update) # Actually initializes the database.
 
 # Load the directors and writers here.
