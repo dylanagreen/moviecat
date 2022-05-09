@@ -11,6 +11,8 @@ import strformat
 import system
 import times
 
+import ../zip/zip/gzipfiles
+
 let db* = open(getAppDir() / "cat.db", "", "", "")
 
 type keywordType* = enum
@@ -55,7 +57,7 @@ proc pretty_print_movie*(movie: Row): string =
     result &= &"{c}: {name}\n"
 
 
-proc initialize_people*(name: string = "name.basics.tsv", should_update = false) =
+proc initialize_people*(name: string = "name.basics.tsv.gz", should_update = false) =
   var db_name = &"people"
   var exists_stmt = db.prepare(&"SELECT name FROM sqlite_master WHERE type='table' AND name='{db_name}'")
   # Checks to see if the table already exists and if it does we bail
@@ -89,7 +91,8 @@ proc initialize_people*(name: string = "name.basics.tsv", should_update = false)
   create_stmt.finalize()
 
   var parser: CSVParser
-  parser.open(loc, separator='\t', quote='\0')
+  let gz_stream = newGzFileStream(loc)
+  parser.open(gz_stream, name, separator='\t', quote='\0')
   # For future reference so we know file loading succeeded
   # logging.debug(&"Loaded IMDB file: {name}")
 
@@ -142,7 +145,7 @@ proc initialize_people*(name: string = "name.basics.tsv", should_update = false)
     db.exec(sql(&"DROP TABLE IF EXISTS people_old"))
 
 
-proc initialize_crew*(name: string = "title.crew.tsv", crew = "director", should_update = false) =
+proc initialize_crew*(name: string = "title.crew.tsv.gz", crew = "director", should_update = false) =
   var db_name = &"{crew}s"
   var exists_stmt = db.prepare(&"SELECT name FROM sqlite_master WHERE type='table' AND name='{db_name}'")
   # Checks to see if the table already exists and if it does we bail
@@ -178,7 +181,8 @@ proc initialize_crew*(name: string = "title.crew.tsv", crew = "director", should
   create_stmt.finalize()
 
   var parser: CSVParser
-  parser.open(loc, separator='\t', quote='\0')
+  let gz_stream = newGzFileStream(loc)
+  parser.open(gz_stream, name, separator='\t', quote='\0')
 
   # Gets all the ids of movies included in the imdb_db
   let movies = map(db.getAllRows(sql"SELECT id FROM imdb_db"), proc(x: Row): string = x[0]).toHashSet
@@ -232,7 +236,7 @@ proc initialize_crew*(name: string = "title.crew.tsv", crew = "director", should
     # Deleting the _old database.
     db.exec(sql(&"DROP TABLE IF EXISTS {crew}s_old"))
 
-proc initialize_movies*(name: string = "title.basics.tsv", should_update = false) =
+proc initialize_movies*(name: string = "title.basics.tsv.gz", should_update = false) =
   var db_name = "imdb_db"
   var exists_stmt = db.prepare(&"SELECT name FROM sqlite_master WHERE type='table' AND name='{db_name}'")
   # Checks to see if the table already exists and if it does we bail
@@ -268,7 +272,8 @@ proc initialize_movies*(name: string = "title.basics.tsv", should_update = false
   create_stmt.finalize()
 
   var parser: CSVParser
-  parser.open(loc, separator='\t', quote='\0')
+  let gz_stream = newGzFileStream(loc)
+  parser.open(gz_stream, name, separator='\t', quote='\0')
   # For future reference so we know file loading succeeded
   # logging.debug(&"Loaded IMDB file: {name}")
 

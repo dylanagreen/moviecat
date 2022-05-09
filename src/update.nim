@@ -1,6 +1,8 @@
+import httpclient
 import marshal
 import os
 import streams
+import strformat
 import times
 
 import imdb
@@ -31,7 +33,19 @@ proc should_update*(): bool =
 
   if result: echo "Database is over a week old, you should update!"
 
+
+proc download_dataset() =
+  let client = newHttpClient()
+  let files: seq[string] = @["name.basics.tsv.gz", "title.basics.tsv.gz", "title.crew.tsv.gz"]
+
+  for f_name in files:
+    var save_loc = getAppDir() / f_name
+    client.downloadFile(&"https://datasets.imdbws.com/{f_name}", save_loc)
+    echo &"Downloaded {f_name}."
+
 proc update*(cmd: string) =
+  download_dataset()
+
   initialize_movies(should_update=true) # Actually initializes the database.
 
   # Load the directors and writers here.
