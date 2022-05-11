@@ -54,7 +54,7 @@ proc remove_dataset() =
     remove_file(loc)
 
 
-proc update*(cmd: string) =
+proc update*() =
   download_dataset()
 
   initialize_movies(should_update=true) # Actually initializes the database.

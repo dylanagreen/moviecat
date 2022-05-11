@@ -79,6 +79,6 @@ proc decrypt_command*(cmd: string) =
   elif cmd.toLower().startsWith("stats"):
     get_stats(cmd)
   elif cmd.toLower().startsWith("update"):
-    update(cmd)
+    update()
   else:
     echo "Unrecognized command"
