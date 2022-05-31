@@ -54,7 +54,7 @@ proc pretty_print_movie*(movie: Row): string =
     else:
       name = db.getRow(sql"SELECT name FROM people WHERE id=?", crew[0])[0]
 
-    result &= &"{c}: {name}\n"
+    result &= &"{c}(s): {name}\n"
 
 
 proc initialize_people*(name: string = "name.basics.tsv.gz", should_update = false) =
