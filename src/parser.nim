@@ -2,6 +2,7 @@ import db_sqlite
 import strformat
 import strutils
 
+import csv_export
 import imdb
 import options
 import ranking
@@ -80,5 +81,7 @@ proc decrypt_command*(cmd: string) =
     get_stats(cmd)
   elif cmd.toLower().startsWith("update"):
     update()
+  elif cmd.toLower() == "export":
+    letterboxd()
   else:
     echo "Unrecognized command"

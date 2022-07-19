@@ -20,7 +20,7 @@ proc median(x: seq[int]): float =
     result = (y[(len(y) - 1) div 2] + y[(len(y) - 1) div 2 + 1]) / 2
 
 
-proc get_score_bounds(): seq[int] =
+proc get_score_bounds*(): seq[int] =
   let
     # We subtract 1 to make this 0-indexed, because no matter what this value
     # is, the lower bound is always assumed to be 0 for simplicity.

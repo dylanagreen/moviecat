@@ -307,3 +307,16 @@ proc get_ranked_movies_by_person*(person: string, role: keywordType): seq[Row] =
   # If you don't do this the db will explode when you try do anything.
   prep.finalize()
 
+
+# Returns all ranked movies from the ranking table.
+proc get_ranked_movies*(): seq[Row] =
+  var
+    # Gets everything, orders it by ranking
+    search_string = "SELECT * FROM ranking ORDER BY rank DESC"
+    prep = db.prepare(search_string)
+
+  result = db.getAllRows(prep)
+
+  # If you don't do this the db will explode when you try do anything.
+  prep.finalize()
+
