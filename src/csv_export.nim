@@ -12,8 +12,11 @@ proc letterboxd*() =
     # Get the score bounds for giving everything an /10 score.
     lower_bounds = get_score_bounds()
 
+    # Where to save the exported rankings
+    loc = getAppDir() /"letterboxd.csv"
+
   # Open the csv file
-  var f = open("letterboxd.csv", fmWrite)
+  var f = open(loc, fmWrite)
   f.writeline("imdbID,Rating10,WatchedDate")
 
 
@@ -41,5 +44,9 @@ proc letterboxd*() =
 
     # Flush the buffer after every line
     f.flushFile()
+
+  return
+
+proc letterboxd_update() =
 
   return
