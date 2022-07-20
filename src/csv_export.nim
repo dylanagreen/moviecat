@@ -1,8 +1,13 @@
+import os
+import parsecsv
+# import system
 import strformat
 import strutils
 
 import ranking
 import summary_stats
+
+
 
 proc letterboxd*() =
   let
@@ -12,12 +17,56 @@ proc letterboxd*() =
     # Get the score bounds for giving everything an /10 score.
     lower_bounds = get_score_bounds()
 
+  var
     # Where to save the exported rankings
-    loc = getAppDir() /"letterboxd.csv"
+    loc = getAppDir() / "letterboxd.csv"
+    old_loc = loc
 
-  # Open the csv file
-  var f = open(loc, fmWrite)
+    # Whether this is an update or not
+    update = false
+
+
+  # If the export already exists, we save the information in a new file, then
+  # create a seperate file that only includes the updated rankings
+  # and then finally move the new file to overwrite the old one.
+  if fileExists(loc):
+    loc = getAppDir() / "letterboxed_new.csv"
+    update = true
+
+  # Gotta put this after the if condition because opening the file
+  # will create it if it doesn't exist.
+  var
+    movie_ids: seq[string] = @[]
+    movie_scores: seq[string] = @[]
+
+    # Open the csv file
+    f = open(loc, fmWrite)
+
+    # Create an empty file object for the updating file
+    f_update: File
   f.writeline("imdbID,Rating10,WatchedDate")
+
+  if update:
+    var parser: CSVParser
+    parser.open(old_loc)
+
+    # Discarding the existence or not of the very first row
+    discard parser.readRow()
+
+    let
+      cols = parser.row
+      id = cols.find("imdbID")
+      rating = cols.find("Rating10")
+
+    # Load the old ids and scores for checking against later
+    while parser.readRow():
+      movie_ids.add(parser.row[id])
+      movie_scores.add(parser.row[rating])
+
+    # Creating the update file
+    let update_loc = getAppDir() / "letterboxed_update.csv"
+    f_update = open(update_loc, fmWrite)
+    f_update.writeline("imdbID,Rating10,WatchedDate")
 
 
   for m in movies:
@@ -45,8 +94,18 @@ proc letterboxd*() =
     # Flush the buffer after every line
     f.flushFile()
 
-  return
+    if update:
+      # If the movie doesn't appear in the old rankings at all add it to the
+      # update file
+      if not(m[0] in movie_ids):
+        f_update.writeline(&"{m[0]},{score},{m[2]}")
+      else:
+        # If the movie does appear check if the score is the same as it was before
+        let idx = movie_ids.find(m[0])
+        if score != parseInt(movie_scores[idx]):
+          f_update.writeline(&"{m[0]},{score},{m[2]}")
 
-proc letterboxd_update() =
+      f_update.flushFile()
 
-  return
+  # Overwrite the old file with the new one.
+  movefile(loc, old_loc)
