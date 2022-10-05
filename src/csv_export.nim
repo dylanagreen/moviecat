@@ -9,7 +9,7 @@ import summary_stats
 
 
 
-proc letterboxd*() =
+proc letterboxd() =
   let
     # Get the movies from the ranking db so we have their rank
     movies = get_ranked_movies()
@@ -109,3 +109,8 @@ proc letterboxd*() =
 
   # Overwrite the old file with the new one.
   movefile(loc, old_loc)
+
+
+proc export_csv*(cmd: string) =
+  letterboxd()
+  return

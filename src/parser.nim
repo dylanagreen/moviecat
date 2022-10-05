@@ -81,7 +81,7 @@ proc decrypt_command*(cmd: string) =
     get_stats(cmd)
   elif cmd.toLower().startsWith("update"):
     update()
-  elif cmd.toLower() == "export":
-    letterboxd()
+  elif cmd.toLower().startsWith("csv") or cmd.toLower().startsWith("export"):
+    export_csv(cmd)
   else:
     echo "Unrecognized command"
