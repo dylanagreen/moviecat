@@ -230,13 +230,11 @@ proc get_stats*(cmd: string) =
 
         found = get_movie_ranking_db(movie_name)
 
-      # TODO refine search if you've ranked multiple movies with the same name
       if found.len == 0:
         echo &"No movie ranked with name: {movie_name}"
       else:
         let
-          found_movie = found[0]
-
+          found_movie = refine_choices(found, "movie")
           rank = get_rank(found_movie)
 
           # Finds the first score interval this fits into and considers that
