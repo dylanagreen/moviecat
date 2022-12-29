@@ -1,3 +1,4 @@
+import db_sqlite
 import httpclient
 import marshal
 import os
@@ -8,6 +9,11 @@ import times
 import imdb
 
 let update_loc* = getAppDir() / "update_info.txt"
+
+var exists_stmt = db.prepare(&"SELECT * FROM sqlite_master WHERE type='table'")
+let first_time* = db.getValue(exists_stmt) == ""
+exists_stmt.finalize()
+
 const UPDATE_CADENCE* = 4
 
 proc write_update_time*() =
@@ -18,7 +24,9 @@ proc write_update_time*() =
   out_strm.close()
 
 proc should_update*(): bool =
-  if not fileExists(update_loc):
+  if first_time:
+    result = false
+  elif not fileExists(update_loc):
     result = true
   else:
     var
