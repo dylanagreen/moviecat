@@ -24,6 +24,7 @@ else:
   # This should only ever run once, the first time you run the program.
   if first_time:
     download_dataset()
+    write_update_time()
 
   initialize_movies(should_update=should_update) # Actually initializes the database.
 
