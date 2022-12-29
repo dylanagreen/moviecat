@@ -2,3 +2,7 @@ cat.db
 src/main
 src/update_info.txt
 src/options.txt
+
+# Ignore the export csv files.
+src/*.csv
+*.csv
