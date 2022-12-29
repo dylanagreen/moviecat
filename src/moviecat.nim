@@ -20,6 +20,13 @@ var
 if should_update:
   update()
 else:
+  # If the cat has no tables at all we're going to need to download them anew.
+  # This should only ever run once, the first time you run the program.
+  var exists_stmt = db.prepare(&"SELECT * FROM sqlite_master WHERE type='table'")
+  if db.getValue(exists_stmt) == "":
+    download_dataset()
+  exists_stmt.finalize()
+
   initialize_movies(should_update=should_update) # Actually initializes the database.
 
   # Load the directors and writers here.
@@ -28,6 +35,8 @@ else:
   initialize_crew(crew="director", should_update=should_update)
   initialize_crew(crew="writer", should_update=should_update)
   initialize_people(should_update=should_update)
+
+  remove_dataset()
 
 var
   num = db.getValue(sql"SELECT COUNT(ALL) from imdb_db")

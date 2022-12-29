@@ -31,11 +31,11 @@ proc should_update*(): bool =
     if (current - last_update).inWeeks >= UPDATE_CADENCE:
       result = true
 
-  if result: echo "Database is over 4 weeks old, you should update!"
+  if result: echo &"Database is over {UPDATE_CADENCE} weeks old, you should update!"
 
 
 # Note to self: You must compile with -d:ssl for this to work.
-proc download_dataset() =
+proc download_dataset*() =
   let client = newHttpClient()
   let files: seq[string] = @["name.basics.tsv.gz", "title.basics.tsv.gz", "title.crew.tsv.gz"]
 
@@ -46,7 +46,7 @@ proc download_dataset() =
 
 
 # Should be self-explanatory
-proc remove_dataset() =
+proc remove_dataset*() =
   let files: seq[string] = @["name.basics.tsv.gz", "title.basics.tsv.gz", "title.crew.tsv.gz"]
 
   for f_name in files:
