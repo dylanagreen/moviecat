@@ -223,6 +223,11 @@ proc get_stats*(cmd: string) =
       chosen = found_keywords.find(1)
       ind = vals.find(keywords[chosen]) + 1
 
+    # For catching things like "stats watched" without a year
+    if ind == vals.len:
+      echo "No keyword descriptor provided!"
+      return
+
     case chosen
     of 0: # Movie
       let
