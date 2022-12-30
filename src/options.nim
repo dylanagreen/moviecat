@@ -41,6 +41,10 @@ proc set_options*() =
 
   discard decrypt_answer(cmd) # In case you need to quit at any point.
 
+  if "cancel" in cmd.toLower():
+    echo "Cancelled operation"
+    return
+
   if to_edit in option_names:
     echo &"Editing {to_edit}"
     echo "Input true or false to turn this option on or off."
