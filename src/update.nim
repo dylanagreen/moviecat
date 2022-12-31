@@ -14,7 +14,7 @@ var exists_stmt = db.prepare(&"SELECT * FROM sqlite_master WHERE type='table'")
 let first_time* = db.getValue(exists_stmt) == ""
 exists_stmt.finalize()
 
-const UPDATE_CADENCE* = 4
+var UPDATE_CADENCE*: int = 4
 
 proc write_update_time*() =
   # Literally just checks to see if the file exists, if it does write

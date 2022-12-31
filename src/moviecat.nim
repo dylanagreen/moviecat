@@ -55,11 +55,16 @@ let
 if not fileExists(options_loc):
   echo "options.txt not found, creating options file."
   var out_strm = newFileStream(options_loc, fmWrite)
-  out_strm.store(active_options)
+  out_strm.writeLine($$active_options)
+  out_strm.writeLine(UPDATE_CADENCE)
   out_strm.close()
 else:
   var strm = newFileStream(options_loc, fmRead)
-  strm.load(active_options)
+  active_options = strm.readLine().to[:active_options]
+  # Not great practice to set an all caps constant as a vae
+  UPDATE_CADENCE = strm.readLine().to[:UPDATE_CADENCE]
+
+  # strm.load(active_options)
   strm.close()
 
 echo &"Initialization complete in {t2 - t1} seconds."
