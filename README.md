@@ -14,20 +14,24 @@ Casablanca as compared to each movie. Things like that.
 
 ## Dependencies
 Moviecat should compile just fine without any dependencies, although if you want
-to actually run it you'll need sqlite.
+to actually run it you'll need sqlite. Make sure you also run `git submodule update`
+in order to make sure you've downloaded the zip wrapper code.
 
 Upon first startup moviecat will download imdb datasets from https://datasets.imdbws.com.
 It will download `title.basics.tsv.gz`, `title.crew.tsv.gz` and `name.basics.tsv.gz`
 When self-updating, moviecat will redownload the datasets to update its internal
 database. By default this happens if the last update happened more than 4 weeks
-ago.
+ago, but this option can be changed in the app.
 
 ## Compiling moviecat
 
 To compile moviecat run the following:
 ```
-nim c src/moviecat.nim
+nim c -d:ssl src/moviecat.nim
 ```
+
+Note the change from previous (< 0.4.0) versions with the addition of the `-d:ssl`
+flag. This is necessary for moviecat to download the imdb datasets.
 
 For a quicker, but potentially more unstable version you can turn on the `-d:release` or
 `-d:danger` flags. Release binaries are compiled using `-d:release`.
