@@ -58,7 +58,7 @@ jobs:
     needs:
       - build-artifact
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: Create Release
         id: create-release
         uses: actions/create-release@v1
