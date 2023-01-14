@@ -12,7 +12,7 @@ import update
 import ui_helper
 
 let
-  version = "moviecat v0.5.0dev - Egyptian Mau"
+  version = "moviecat v0.4.0 - Devon Rex"
   author = "by Dylan Green"
 
 proc about() =
