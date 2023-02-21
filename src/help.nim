@@ -20,5 +20,10 @@ proc help_string*(cmd: string) =
 
   echo help_table[key]
 
+  if key == "help":
+    echo "Currently implemented commands:"
+    echo names.join("\n")
+
+
 
 
