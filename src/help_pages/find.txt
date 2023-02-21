@@ -1,0 +1,26 @@
+NAME: find
+USAGE:
+    find [MOVIE]
+DESCRIPTION:
+    Attempts to find MOVIE in the internal IMDB database. If the movie is found,
+    a paragraph of information will print.
+
+    If disambiguation is enabled, a second window will open requesting further
+    details. This window could have up to three options:
+
+    NAME - DESCRIPTION
+    ------------------
+    year - the year the movie was released
+    director - (one of) the director(s) of the movie
+    writer - (one of) the writer(s) of the movie
+
+    To use these options, pass the [NAME] followed by the value. For example:
+
+    year 1985
+    director robert zemeckis
+    writer bob gale
+
+    Note that these options are case insensitive.
+
+    After disambiguation all MOVIEs matching the input criteria will print. To
+    select a movie input the printed number identifier next to its name and year.

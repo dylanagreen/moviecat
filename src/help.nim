@@ -5,7 +5,9 @@ import tables
 
 # Compile time load all the help pages.
 const help_table = {"about": staticRead("help_pages/about.txt"),
-                    "help": staticRead("help_pages/help.txt")}.toTable
+                    "help": staticRead("help_pages/help.txt"),
+                    "find": staticRead("help_pages/find.txt"),
+                    "print": staticRead("help_pages/print.txt")}.toTable
 
 proc help_string*(cmd: string) =
   let subs = cmd.split(" ")

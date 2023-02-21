@@ -1,0 +1,30 @@
+NAME: print
+USAGE:
+    print [top/bottom] [NUMBER] <CATEGORY> <DESCRIPTION>
+DESCRIPTION:
+    Print the top or bottom (up to) NUMBER movies in the given CATEGORY in
+    ranking order. If less than NUMBER movies are ranked that fulfill the
+    qualifications then all movies that fulfill the criteria are printed (in order).
+    CATEGORY is optional and if it is not provided, print the top or bottom
+    NUMBER movies overall out of all the ranked movies.
+    CATEGORY must be one of the following, if provided:
+
+    NAME - DESCRIPTION
+    ------------------
+    year - the year the movie was released
+    watched - the year the movie was watched (if it was provided when ranking)
+    director - (one of) the director(s) of the movie
+    writer - (one of) the writer(s) of the movie
+
+    To use these, pass the [NAME] followed by the value. For example:
+
+    year 1985
+    director robert zemeckis
+    writer bob gale
+
+    Note that these options are case insensitive.
+
+EXAMPLES:
+    print top 10 year 1985 - print the top (up to) 10 movies released in the year 1985
+    print bottom 100 - print the lowest 100 movies overall you've ranked
+    print top 15 watched 2023 - print the top 15 movies watched in the year 2023
