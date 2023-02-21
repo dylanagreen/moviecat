@@ -3,6 +3,7 @@ import strformat
 import strutils
 
 import csv_export
+import help
 import imdb
 import options
 import ranking
@@ -65,6 +66,8 @@ proc insert_movie(cmd: string) =
 proc decrypt_command*(cmd: string) =
   if cmd.toLower() == "quit":
     shutdown()
+  elif cmd.toLower().startsWith("help"):
+    help_string(cmd)
   elif cmd.toLower().startsWith("insert") or cmd.toLower().startsWith("rank"):
     insert_movie(cmd)
   elif cmd.toLower().startsWith("find"):
