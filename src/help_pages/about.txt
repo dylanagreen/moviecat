@@ -1,0 +1,5 @@
+NAME: about
+USAGE:
+    about
+DESCRIPTION:
+    Prints information about the program.
