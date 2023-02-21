@@ -1,0 +1,5 @@
+NAME: help
+USAGE:
+    help [COMMAND]
+DESCRIPTION:
+    Prints help information about COMMAND.

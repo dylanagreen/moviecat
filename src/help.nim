@@ -1,13 +1,17 @@
 import os
+import strformat
 import strutils
 import tables
 
 let
-  help_table = {"about": readFile(getAppDir()  / "help_pages" / "about.txt"),
-                "help": "NAME: help \nUSAGE: help [COMMAND] \nDESCRIPTION: Prints help information about COMMAND."}.toTable
+  # Command names to load the help files for.
+  names = ["about", "help"]
+
+var help_table = initTable[string, string]()
+for name in names:
+  help_table[name] = readFile(getAppDir()  / "help_pages" / &"{name}.txt")
 
 proc help_string*(cmd: string) =
-  echo help_table
   let subs = cmd.split(" ")
   var key = "help" # By default show the help string for help command
 
