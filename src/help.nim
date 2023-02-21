@@ -3,13 +3,9 @@ import strformat
 import strutils
 import tables
 
-let
-  # Command names to load the help files for.
-  names = ["about", "help"]
-
-var help_table = initTable[string, string]()
-for name in names:
-  help_table[name] = readFile(getAppDir()  / "help_pages" / &"{name}.txt")
+# Compile time load all the help pages.
+const help_table = {"about": staticRead("help_pages/about.txt"),
+                    "help": staticRead("help_pages/help.txt")}.toTable
 
 proc help_string*(cmd: string) =
   let subs = cmd.split(" ")
@@ -22,7 +18,9 @@ proc help_string*(cmd: string) =
 
   if key == "help":
     echo "Currently implemented commands:"
-    echo names.join("\n")
+
+    for key in help_table.keys():
+      echo key
 
 
 
