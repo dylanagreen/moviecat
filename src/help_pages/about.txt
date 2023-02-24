@@ -2,4 +2,4 @@ NAME: about
 USAGE:
     about
 DESCRIPTION:
-    Prints information about the program.
+    Print information about the program.

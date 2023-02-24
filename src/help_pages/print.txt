@@ -4,7 +4,7 @@ USAGE:
 DESCRIPTION:
     Print the top or bottom (up to) NUMBER movies in the given CATEGORY in
     ranking order. If less than NUMBER movies are ranked that fulfill the
-    qualifications then all movies that fulfill the criteria are printed (in order).
+    qualifications then print all movies that fulfill the criteria (in order).
     CATEGORY is optional and if it is not provided, print the top or bottom
     NUMBER movies overall out of all the ranked movies.
     CATEGORY must be one of the following, if provided:

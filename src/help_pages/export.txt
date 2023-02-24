@@ -4,8 +4,8 @@ USAGE:
 ALIASES:
     csv
 DESCRIPTION:
-    Exports the ranking database to a CSV. By default exports the CSV in a
+    Export the ranking database to a CSV. By default, export the CSV in a
     format compatible with letterboxd import features.
 
-    If a prior export CSV is found, exports both an updated CSV as well as an
+    If a prior export CSV is found, export both an updated CSV as well as an
     "update only" CSV with only newly ranked moved included.
