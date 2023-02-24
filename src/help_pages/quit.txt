@@ -1,0 +1,5 @@
+NAME: quit
+USAGE:
+    quit
+DESCRIPTION:
+    Quits the program.
