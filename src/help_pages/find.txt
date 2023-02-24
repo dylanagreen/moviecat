@@ -5,7 +5,7 @@ DESCRIPTION:
     Attempt to find MOVIE in the internal IMDB database. If the movie is found,
     print a paragraph of information.
 
-    If disambiguation is enabled, a second window will open requesting further
+    If disambiguation is enabled, a second prompt will open requesting further
     details. This window could have up to three options:
 
     NAME - DESCRIPTION

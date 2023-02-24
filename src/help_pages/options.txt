@@ -1,0 +1,19 @@
+NAME: options
+USAGE:
+    options
+DESCRIPTION:
+    Update and view currently set options.
+
+    A second prompt will open printing all settable options and their current
+    values.
+
+    Options to edit:
+    [0] year: true
+    [1] director: true
+    [2] writer: true
+    [3] update cadence (weeks): 4
+
+    To update an option input the number next to its name. At the third prompt,
+    input the new requested value. For year, director, or writer disambiguation
+    the options are true or false. For update cadence the value input must
+    be in weeks, and must be greater than 0.
