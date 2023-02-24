@@ -1,0 +1,10 @@
+NAME: update
+USAGE:
+    update
+DESCRIPTION:
+    Update the internal IMDB movie database. First, download the three requisite
+    files: "name.basics.tsv.gz", "title.basics.tsv.gz", "title.crew.tsv.gz". After
+    downloading the files, moviecat will enter update mode and load all of the
+    included data into the internal database. Any movies in the current database
+    not in the updated database are kept, otherwise the data is updated to
+    reflect the newly downloaded files.
