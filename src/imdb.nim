@@ -337,34 +337,29 @@ proc find_movie_db*(name: string, params: seq[string]): seq[Row] =
 
   var
     search_string = "SELECT * FROM imdb_db A WHERE A.name LIKE ?"
-    prep = db.prepare(search_string)
+    param_num = 2
 
-  if "year" in params:
-    let year = params[params.find("year") + 1]
-    search_string = search_string & &" AND A.year=?"
+  # First assemble the search string
+  # I actually search this order specifically because I want the year
+  # param to be first in the search string.
+  for opt in ["year", "writer", "director"]:
+    if opt in params:
+      if opt == "director":
+        search_string &= " AND A.id in (SELECT B.movie FROM directors B WHERE B.director=?)"
+      elif opt == "writer":
+        search_string &= " AND A.id in (SELECT B.movie FROM writers B WHERE B.writer=?)"
+      elif opt == "year":
+        search_string &= " AND A.year=?"
 
-    prep.finalize() # Finalize the random other prepared statement.
-    prep = db.prepare(search_string)
-    prep.bindParam(2, year)
-
-  # I guess this means director overrides year, note to self change that.
-  if "director" in params:
-    let director = params[params.find("director") + 1]
-    search_string &= "AND A.id in (SELECT B.movie FROM directors B WHERE B.director=?)"
-
-    prep.finalize() # Finalize the random other prepared statement.
-    prep = db.prepare(search_string)
-    prep.bindParam(2, director)
-
-  if "writer" in params:
-    let director = params[params.find("writer") + 1]
-    search_string &= "AND A.id in (SELECT B.movie FROM writers B WHERE B.writer=?)"
-
-    prep.finalize() # Finalize the random other prepared statement.
-    prep = db.prepare(search_string)
-    prep.bindParam(2, director)
-
+  # then bind the params after preparing the prepared statement.
+  var prep = db.prepare(search_string)
   prep.bindParam(1, &"%{search_name}%")
+  for opt in ["year", "writer", "director"]:
+    if opt in params:
+      let param_data = params[params.find($opt) + 1]
+      prep.bindParam(param_num, param_data)
+      param_num += 1
+
   result = db.getAllRows(prep)
 
   # If you don't do this the db will explode when you try do anything.
