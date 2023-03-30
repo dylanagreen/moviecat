@@ -1,0 +1,39 @@
+NAME: rank
+USAGE:
+    rank [MOVIE]
+DESCRIPTION:
+    Rank a MOVIE relative to the other MOVIEs in the internal ranking. First
+    attempt to find MOVIE in the internal IMDB database.
+
+    If disambiguation is enabled, a second window will open requesting further
+    details. This window could have up to three options:
+
+    NAME - DESCRIPTION
+    ------------------
+    year - the year the movie was released
+    director - (one of) the director(s) of the movie
+    writer - (one of) the writer(s) of the movie
+
+    To use these options, pass the [NAME] followed by the value. For example:
+
+    year 1985
+    director robert zemeckis
+    writer bob gale
+
+    Note that these options are case insensitive.
+
+    After disambiguation all MOVIEs matching the input criteria will print. To
+    select a movie input the printed number identifier next to its name and year.
+
+    Once a MOVIE is selected, moviecat will ask a series of yes or no questions,
+    comparing the input movie to a selection of movies already ranked in the database.
+    Answer `yes` or `y` if the selected MOVIE is better than the reference movie,
+    answer `no`, `n`, or anything else if it is not.
+
+    NOTE: This means that the default response is `no`.
+
+    After ranking the MOVIE, optionally enter the date on which the MOVIE was
+    watched. This step can be skipped by entering `n` or `N`.
+
+    Finally, the MOVIE's final rank is printed, and the movie is inserted into
+    the ranking database for future reference.

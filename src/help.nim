@@ -11,7 +11,8 @@ const help_table = {"about": staticRead("help_pages/about.txt"),
                     "export": staticRead("help_pages/export.txt"),
                     "quit": staticRead("help_pages/quit.txt"),
                     "update": staticRead("help_pages/update.txt"),
-                    "options": staticRead("help_pages/options.txt")}.toTable
+                    "options": staticRead("help_pages/options.txt"),
+                    "rank": staticRead("help_pages/rank.txt")}.toTable
 
 proc help_string*(cmd: string) =
   let subs = cmd.split(" ")
