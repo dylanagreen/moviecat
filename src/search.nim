@@ -7,7 +7,16 @@ import ui_helper
 
 proc extract_val*(cmd: string, extract: keywordType): tuple[success: bool, val: string] =
   var vals = cmd.split(' ')
-  let ind = vals.find($extract)
+  let
+    ind = vals.find($extract)
+
+    # Find the location for all keywords, so we can find names as being between
+    # two keywords
+    keywords = @[$keywordType.movie, $keywordType.year, $keywordType.watched,
+                  $keywordType.director, $keywordType.writer]
+    keyword_locs = keywords.map(proc(x: string): int = vals.find(x))
+
+    extract_idx = keywords.find($extract)
 
   # If the keyword is not found, return false
   if ind == -1:
@@ -48,44 +57,43 @@ proc extract_val*(cmd: string, extract: keywordType): tuple[success: bool, val: 
     if year > 0:
       result = (true, $year)
 
-  if extract == keywordType.director:
-    var director = ""
-    try:
-      vals = cmd.split('"')
-      let val_contains = map(vals, proc(x: string): bool = x.contains("director"))
-      director = vals[val_contains.find(true) + 1]
-
-      # Didn't find a director that you passed so tell the user.
-      if director == "": echo "Invalid director. Did you forget quotation marks?"
+  if extract == keywordType.director or extract == keywordType.writer:
+    var print_name = if extract == keywordType.director: "Director" else: "Writer"
+    # In this case the keyword is the last one found
+    if keyword_locs[extract_idx] == max(keyword_locs):
+      # Here is where we need to check that there even is a name....
+      if keyword_locs[extract_idx] == len(vals) - 1:
+        echo &"{print_name} name not found!"
       else:
-        let id = refine_choices(find_person(director), "people")[0]
+        let
+          # Join all words after the keyword as the name
+          person = vals[(ind + 1)..^1].join(" ")
+          id = refine_choices(find_person(person), "people")[0]
 
         if len(id) == 0:
-          echo "Director not found!"
+          echo &"{print_name} not found!"
         else:
           result = (true, id)
 
-          # Will also trigger if identify person returns an empty container.
-    except IndexDefect:
-      echo "Invalid director. Did you forget quotation marks?"
+    else:
+      # Need to find the index of the next found keyword, i.e. the first
+      # index larger than the current keyword's index
+      var next_idx = len(vals) + 1
+      for x in keyword_locs:
+        if (x < next_idx) and (x > ind):
+          next_idx = x
 
-  if extract == keywordType.writer:
-    var writer = ""
-    try:
-      vals = cmd.split('"')
-      let val_contains = map(vals, proc(x: string): bool = x.contains("writer"))
-      writer = vals[val_contains.find(true) + 1]
-
-      # Didn't find a director that you passed so tell the user.
-      if writer == "": echo "Invalid writer. Did you forget quotation marks?"
+      # In this case there are no words between the two keywords so there
+      # is no name to search for!
+      if next_idx - extract_idx == 1:
+        echo &"{print_name} name not found!"
       else:
-        let id = refine_choices(find_person(writer), "people")[0]
+        let
+          # Join all words after the keyword as the name
+          person = vals[(ind + 1)..(next_idx - 1)].join(" ")
+          id = refine_choices(find_person(person), "people")[0]
 
         if len(id) == 0:
-          echo "Writer not found!"
+          echo &"{print_name} not found!"
         else:
           result = (true, id)
-
-    # Will also trigger if identify person returns an empty container.
-    except IndexDefect:
-      echo "Invalid writer. Did you forget quotation marks?"
