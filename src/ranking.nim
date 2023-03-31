@@ -152,7 +152,7 @@ proc get_movie_rank*(lower_bound, upper_bound: int, movie: string, comparison: c
     cur_iter = 1
 
     # Disgusting type conversions...
-    num_qs = int(ceil(log2(float(upper + 1))))
+    num_qs = int(floor(log2(float(upper + 1))))
 
   while true:
     # These first two if blocks handle edge cases.
