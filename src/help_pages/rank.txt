@@ -37,3 +37,7 @@ DESCRIPTION:
 
     Finally, the MOVIE's final rank is printed, and the movie is inserted into
     the ranking database for future reference.
+
+    If a MOVIE is already ranked, moviecat will ask if you want to rerank the movie
+    or cancel. Passing `y` or `yes` will run the ranking algorithm again, overwriting
+    the old ranking with the newly found one.
