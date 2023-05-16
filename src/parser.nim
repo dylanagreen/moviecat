@@ -86,5 +86,7 @@ proc decrypt_command*(cmd: string) =
     update()
   elif cmd.toLower().startsWith("csv") or cmd.toLower().startsWith("export"):
     export_csv(cmd)
+  elif cmd.toLower() == "recent":
+    recent()
   else:
     echo "Unrecognized command"

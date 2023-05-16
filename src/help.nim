@@ -12,6 +12,7 @@ const help_table = {"about": staticRead("help_pages/about.txt"),
                     "quit": staticRead("help_pages/quit.txt"),
                     "update": staticRead("help_pages/update.txt"),
                     "options": staticRead("help_pages/options.txt"),
+                    "recent": staticRead("help_pages/recent.txt"),
                     "rank": staticRead("help_pages/rank.txt")}.toTable
 
 proc help_string*(cmd: string) =

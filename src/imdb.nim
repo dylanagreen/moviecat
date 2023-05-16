@@ -375,3 +375,14 @@ proc find_person*(name: string): seq[Row] =
 
   # If you don't do this the db will explode when you try do anything.
   prep.finalize()
+
+
+proc recent*() =
+  # Proc to find your most recently ranked move
+  let
+    ranking = db.getRow(sql"SELECT * FROM ranking ORDER BY date DESC LIMIT 1")
+    movie = db.getRow(sql"SELECT * FROM imdb_db WHERE id = ?", ranking[0])
+
+  echo &"Most recently watched movie was watched on {ranking[^1]}:"
+  echo movie_row_to_string(movie)
+
