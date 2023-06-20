@@ -10,7 +10,7 @@ import ui_helper
 
 # Type for the comparison procedure that takes in a
 # string and an int and returns a bool
-type cmpProc = proc(movie: string, rank: int, cur_iter: int, num_qs: int): bool
+type cmpProc = proc(movie: string, rank: int, cur_iter: int): bool
 
 # Find the movie in the movie db that corresponds to the id in this ranking.
 proc ranking_to_string(ranking: Row, watched=false): string =
@@ -130,10 +130,10 @@ proc delete_movie(id: string) =
 
 
 # Compares a movie to the movie at rank rank.
-# Cur_iter and num_qs are here for printing purposes
-proc get_comparison(movie: string, rank: int, cur_iter: int, num_qs: int): bool =
+# Cur_iter is here for printing purposes
+proc get_comparison(movie: string, rank: int, cur_iter: int): bool =
   let comp = ranking_to_string(db.getRow(sql"SELECT * FROM ranking WHERE rank=?", rank))
-  echo &"({cur_iter}/{num_qs}) Is {movie} > {comp}?"
+  echo &"({cur_iter}) Is {movie} > {comp}?"
   let cmd = receive_command()
 
   # This actually implicitly makes it so that blank strings are taken as "no"
@@ -151,9 +151,6 @@ proc get_movie_rank*(lower_bound, upper_bound: int, movie: string, comparison: c
 
     cur_iter = 1
 
-    # Disgusting type conversions...
-    num_qs = int(floor(log2(float(upper + 1))))
-
   while true:
     # These first two if blocks handle edge cases.
     # If the lower and upper bounds are the same we need to check to see if the
@@ -162,7 +159,7 @@ proc get_movie_rank*(lower_bound, upper_bound: int, movie: string, comparison: c
     if lower == upper:
       # Find out of the value is better than the lower value, which is
       # the insertion point.
-      greater = comparison(movie, lower + 1, cur_iter, num_qs)
+      greater = comparison(movie, lower + 1, cur_iter)
       result = if greater: lower + 1 else: lower
       break
 
@@ -179,7 +176,7 @@ proc get_movie_rank*(lower_bound, upper_bound: int, movie: string, comparison: c
 
      # Find out of the value is better than the midpoint.
      # Increase by one because algo 0 indexed but ranking 1 indexed.
-    greater = comparison(movie, mid + 1, cur_iter, num_qs)
+    greater = comparison(movie, mid + 1, cur_iter)
     if greater: lower = mid + 1
     else:
       # Normally we might insert at the equality point but here's a secret
