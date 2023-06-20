@@ -128,8 +128,6 @@ proc initialize_people*(name: string = "name.basics.tsv.gz", should_update = fal
   # Always want to close when you're done for memory purposes!
   parser.close()
 
-  echo "People table created"
-
   if should_update:
     # Rename the database old then move the new one into place
     db.exec(sql(&"ALTER TABLE people RENAME TO people_old"))
@@ -143,6 +141,10 @@ proc initialize_people*(name: string = "name.basics.tsv.gz", should_update = fal
 
     # Deleting the _old database.
     db.exec(sql(&"DROP TABLE IF EXISTS people_old"))
+
+    echo "People table updated"
+  else:
+    echo "People table created"
 
 
 proc initialize_crew*(name: string = "title.crew.tsv.gz", crew = "director", should_update = false) =
@@ -218,8 +220,6 @@ proc initialize_crew*(name: string = "title.crew.tsv.gz", crew = "director", sho
   # Always want to close when you're done for memory purposes!
   parser.close()
 
-  echo &"{crew}s table created"
-
   if should_update:
     # Rename the database old then move the new one into place
     db.exec(sql(&"ALTER TABLE {crew}s RENAME TO {crew}s_old"))
@@ -235,6 +235,11 @@ proc initialize_crew*(name: string = "title.crew.tsv.gz", crew = "director", sho
 
     # Deleting the _old database.
     db.exec(sql(&"DROP TABLE IF EXISTS {crew}s_old"))
+
+
+    echo &"{crew}s table updated"
+  else:
+    echo &"{crew}s table created"
 
 proc initialize_movies*(name: string = "title.basics.tsv.gz", should_update = false) =
   var db_name = "imdb_db"
