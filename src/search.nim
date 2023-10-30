@@ -68,12 +68,13 @@ proc extract_val*(cmd: string, extract: keywordType): tuple[success: bool, val: 
         let
           # Join all words after the keyword as the name
           person = vals[(ind + 1)..^1].join(" ")
-          id = refine_choices(find_person(person), "people")[0]
+          found = find_person(person)
+          id = refine_choices(found, "people")
 
         if len(id) == 0:
           echo &"{print_name} not found!"
         else:
-          result = (true, id)
+          result = (true, id[0])
 
     else:
       # Need to find the index of the next found keyword, i.e. the first
