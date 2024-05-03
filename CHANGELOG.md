@@ -6,7 +6,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.0] - Egyptian Mau - Unreleased
+## [0.6.0] - Unreleased
+
+## [0.5.0] - Egyptian Mau - 2024-05-03
+### Added
+- moviecat now has a `help` command that describes how all other commands work.
+  - Usage: `help [command name]`
+- `help` with no parameters will list help usage as well as a list of currently implemented commands.
+
+### Changed
+- When searching for writer/director names it is no longer necessary to enclose the entire name in quotation marks.
+  - Previously it was necessary to enclose the name to search for it as a single string
+- When a writer or a director is not found while refining movies moviecat now falls back to the refinement screen instead of silently crashing.
+
+### Fixed
+- It is now possible to search by both movie name + director or writer, or year + director or writer
+
 
 ## [0.4.0] - Devon Rex - 2023-01-13
 ### Added
