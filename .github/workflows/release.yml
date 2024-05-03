@@ -9,7 +9,7 @@ on:
 
 env:
   APP_NAME: 'moviecat'
-  NIM_VERSION: 'stable'
+  NIM_VERSION: '1.6.x'
   MAINTAINER: 'Dylan Green'
   RELEASE_FILES: moviecat LICENSE.txt README.*
 
@@ -23,7 +23,7 @@ jobs:
           - windows-latest
           - macOS-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: recursive
       - uses: jiro4989/setup-nim-action@v1
