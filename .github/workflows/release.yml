@@ -21,7 +21,7 @@ jobs:
         os:
           - ubuntu-latest
           - windows-latest
-          # - macOS-latest
+          - macos-13
     steps:
       - uses: actions/checkout@v4
         with:
@@ -91,7 +91,7 @@ jobs:
           - os: windows-latest
             asset_name_suffix: windows.zip
             asset_content_type: application/zip
-          - os: macOS-latest
+          - os: macos-13
             asset_name_suffix: macos.tar.gz
             asset_content_type: application/gzip
     steps:
