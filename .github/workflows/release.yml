@@ -19,11 +19,11 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-18.04
+          - ubuntu-latest
           - windows-latest
-          - macOS-latest
+          # - macOS-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       - uses: jiro4989/setup-nim-action@v1
@@ -46,7 +46,7 @@ jobs:
             ls -lah *.*
           )
         shell: bash
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: artifact-${{ matrix.os }}
           path: |
@@ -58,7 +58,7 @@ jobs:
     needs:
       - build-artifact
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Create Release
         id: create-release
         uses: actions/create-release@v1
@@ -74,7 +74,7 @@ jobs:
       - name: Write upload_url to file
         run: echo '${{ steps.create-release.outputs.upload_url }}' > upload_url.txt
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: create-release
           path: upload_url.txt
@@ -95,11 +95,11 @@ jobs:
             asset_name_suffix: macos.tar.gz
             asset_content_type: application/gzip
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4
         with:
           name: artifact-${{ matrix.os }}
 
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4
         with:
           name: create-release
 
